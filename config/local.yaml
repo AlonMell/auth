@@ -1,0 +1,10 @@
+env: "local" #local, dev, prod
+token_ttl: 1h
+db:
+  port: 5433
+  version: 16
+  user: "alonmell"
+http_server:
+  address: "localhost:8082"
+  timeout: 5s
+  idle_timeout: 60s
