@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/ilyakaznacheev/cleanenv"
 	"os"
-	"providerHub/internal/constants"
 	"time"
 )
 
@@ -16,9 +15,12 @@ type Config struct {
 }
 
 type DB struct {
-	Port     string `yaml:"port" env-default:"5432"`
-	Version  string `yaml:"version" env-default:"16"`
-	Username string `yaml:"user" env-default:"postgres"`
+	Host     string `yaml:"host" env-required:"true"`
+	Port     int    `yaml:"port" env-default:"5432"`
+	User     string `yaml:"user" env-default:"postgres"`
+	Password string `yaml:"password" env-default:"postgres"`
+	Database string `yaml:"database" env-default:"postgres"`
+	SqlPath  string `yaml:"sql_path" env-required:"true"`
 }
 
 type HTTPServer struct {
@@ -29,7 +31,7 @@ type HTTPServer struct {
 
 func MustLoad() *Config {
 	path := fetchConfigPath()
-	if path == constants.EmptyString {
+	if path == "" {
 		panic("config file path is empty")
 	}
 
@@ -48,10 +50,10 @@ func MustLoad() *Config {
 func fetchConfigPath() string {
 	var path string
 
-	flag.StringVar(&path, "config", constants.EmptyString, "path to config file")
+	flag.StringVar(&path, "config", "", "path to config file")
 	flag.Parse()
 
-	if path == constants.EmptyString {
+	if path == "" {
 		path = os.Getenv("CONFIG_PATH")
 	}
 

@@ -1,0 +1,13 @@
+env: "dev" #dev, prod
+token_ttl: 1h
+db:
+  host: "localhost"
+  port: 5432
+  user: "alonmell"
+  password: "zasode"
+  database: "ProviderHub"
+  sql_path: "./internal/storage/postgres/sql/init_users.sql"
+http_server:
+  address: "localhost:8082"
+  timeout: 5s
+  idle_timeout: 60s
