@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	"io"
 	"log/slog"
-	"os"
 	"providerHub/internal/config"
+	"providerHub/pkg/migrator"
 )
 
 type Storage struct {
@@ -30,29 +29,12 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if err = prepareDB(db, cfg); err != nil {
+	migratorConfig := migrator.New(db, cfg.SqlPath, cfg.Table, cfg.MajorVersion, cfg.MinorVersion)
+	if err = migrator.Migrate(migratorConfig); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	logger.Info("Successfully connected to the database!")
 
 	return &Storage{db}, nil
-}
-
-func prepareDB(db *sql.DB, cfg *config.Config) error {
-	const op = "storage.postgres.prepareDB"
-
-	file, err := os.Open(cfg.SqlPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer file.Close()
-
-	script, err := io.ReadAll(file)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	_, err = db.Exec(string(script))
-	return err
 }

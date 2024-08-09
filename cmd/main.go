@@ -19,7 +19,6 @@ func main() {
 	log := setupLogger(cfg.Env)
 
 	log.Info("starting server", slog.String("env", cfg.Env))
-	//log.Info(fmt.Sprintf("config: %+v", cfg))
 	log.Debug("debug messages are enabled")
 
 	storage, err := postgres.New(cfg, log)
@@ -27,7 +26,7 @@ func main() {
 		log.Error("Error with start db postgres!" + err.Error())
 	}
 
-	log.Info(fmt.Sprintf("storage: %+v", storage))
+	log.Debug(fmt.Sprintf("storage: %+v", storage))
 }
 
 func setupLogger(env string) *slog.Logger {
