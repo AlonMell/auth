@@ -31,7 +31,7 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 
 	migratorConfig := migrator.New(db, cfg.SqlPath, cfg.Table, cfg.MajorVersion, cfg.MinorVersion)
 	if err = migrator.Migrate(migratorConfig); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, err
 	}
 
 	logger.Info("Successfully connected to the database!")

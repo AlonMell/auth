@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS migrations_history
 );
 
 INSERT INTO migrations_history(major_Version, minor_version, file_number, comment)
-VALUES ('00', '00', '0000', 'baseline');
+VALUES ('00', '00', '0001', 'baseline');
 
 CREATE TABLE IF NOT EXISTS users
 (

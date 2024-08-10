@@ -30,6 +30,11 @@ func New(db *sql.DB, path, table string, major, minor int) *Config {
 	}
 }
 
+// TODO: Сделать автодобавление новой записи миграций
+// TODO: Сделать парсинг файлов в горутинах (И последовательное выполнение скриптов)
+// TODO: Сделать возможность отката к предыдущим версиям
+// TODO: Возможно, ускорить поиск подходящего номера файла
+
 func Migrate(cfg *Config) error {
 	const op = "migrator.Migrate"
 
@@ -49,8 +54,9 @@ func Migrate(cfg *Config) error {
 		return err
 	}
 
-	if cfg.Target.Major == cfg.Current.Major &&
-		cfg.Target.Minor == cfg.Current.Minor {
+	if cfg.Target.Major < cfg.Current.Major ||
+		cfg.Target.Major == cfg.Current.Major &&
+			cfg.Target.Minor <= cfg.Current.Minor {
 		return nil
 	}
 
@@ -71,7 +77,13 @@ func (c *Config) setCurrentVersion() error {
     ORDER BY date_applied DESC 
     LIMIT 1;`, c.Table)
 
-	err := c.db.QueryRow(query).Scan(&c.Current.Major, &c.Current.Minor, &c.Current.FileNumber)
+	stmt, err := c.db.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow().Scan(&c.Current.Major, &c.Current.Minor, &c.Current.FileNumber)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -112,12 +124,20 @@ func (c *Config) exec(name string) error {
 	}
 	defer file.Close()
 
+	// TODO: сделать чтение с горутинами
 	script, err := io.ReadAll(file)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = c.db.Exec(string(script))
+	// TODO: сделать подготовку с горутинами
+	stmt, err := c.db.Prepare(string(script))
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
 	return err
 }
 
@@ -131,8 +151,14 @@ func (c *Config) tableExists() (bool, error) {
         AND table_name = $1
     );`
 
+	stmt, err := c.db.Prepare(query)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
 	var exists bool
-	err := c.db.QueryRow(query, c.Table).Scan(&exists)
+	err = stmt.QueryRow(c.Table).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
