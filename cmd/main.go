@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"providerHub/internal/config"
 	"providerHub/internal/storage/postgres"
+	"providerHub/pkg/logger"
+	"providerHub/pkg/logger/sl"
 )
 
 const (
@@ -18,15 +19,16 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	log.Info("starting server", slog.String("env", cfg.Env))
+	log.Info("starting server", slog.Any("cfg", cfg))
 	log.Debug("debug messages are enabled")
 
 	storage, err := postgres.New(cfg, log)
 	if err != nil {
-		log.Error("Error with start db postgres!" + err.Error())
+		log.Error("Error with start db postgres!", sl.Err(err))
+		os.Exit(1)
 	}
+	_ = storage
 
-	log.Debug(fmt.Sprintf("storage: %+v", storage))
 }
 
 func setupLogger(env string) *slog.Logger {
@@ -34,9 +36,7 @@ func setupLogger(env string) *slog.Logger {
 
 	switch env {
 	case envDev:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
+		log = setupDevelopLogger()
 	case envProd:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
@@ -44,4 +44,16 @@ func setupLogger(env string) *slog.Logger {
 	}
 
 	return log
+}
+
+func setupDevelopLogger() *slog.Logger {
+	opts := logger.DevelopHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewDevelopHandler(os.Stdout)
+
+	return slog.New(handler)
 }
