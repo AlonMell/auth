@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"providerHub/internal/config"
+	"providerHub/internal/httpServer"
 	"providerHub/internal/storage/postgres"
 	"providerHub/pkg/logger"
 	"providerHub/pkg/logger/sl"
@@ -29,6 +30,11 @@ func main() {
 	}
 	_ = storage
 
+	err = httpServer.Run()
+	if err != nil {
+		log.Error("Error with start http server:", sl.Err(err))
+		os.Exit(1)
+	}
 }
 
 func setupLogger(env string) *slog.Logger {
