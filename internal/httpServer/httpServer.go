@@ -2,13 +2,13 @@ package httpServer
 
 import (
 	"net/http"
-	"providerHub/internal/httpServer/api"
-	_ "providerHub/internal/httpServer/api"
+	"providerHub/internal/httpServer/endpoint"
+	_ "providerHub/internal/httpServer/endpoint"
 	"providerHub/pkg/middleware"
 )
 
 func Run() error {
-	http.Handle("/", middleware.Conveyor(http.HandlerFunc(api.Main), middleware.CORS))
+	http.Handle("/", middleware.Conveyor(http.HandlerFunc(endpoint.Main), middleware.CORS))
 	/*mux := http.NewServeMux()
 	mux.HandleFunc("/login/", api.Login)
 	mux.HandleFunc("/register/", api.Register)

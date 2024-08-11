@@ -6,7 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"log/slog"
 	"providerHub/internal/config"
-	"providerHub/internal/domain/models"
+	"providerHub/internal/domain/model"
 	"providerHub/pkg/migrator"
 )
 
@@ -40,7 +40,7 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 	return &Storage{db}, nil
 }
 
-func (s *Storage) SaveUser(user models.User) error {
+func (s *Storage) SaveUser(user model.User) error {
 	const op = "storage.postgres.SaveUser"
 
 	query := `INSERT INTO users(login, email, password_hash, phone, is_active) VALUES ($1, $2, $3, $4, $5)`
@@ -59,7 +59,7 @@ func (s *Storage) SaveUser(user models.User) error {
 	return nil
 }
 
-func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
+func (s *Storage) GetUserByLogin(login string) (*model.User, error) {
 	const op = "storage.postgres.GetUserByLogin"
 
 	query := `
@@ -73,7 +73,7 @@ func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
 	}
 	defer stmt.Close()
 
-	var user models.User
+	var user model.User
 	err = stmt.QueryRow(login).Scan(&user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)

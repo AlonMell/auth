@@ -1,9 +1,9 @@
-package api
+package endpoint
 
 import (
 	"encoding/json"
 	"net/http"
-	"providerHub/internal/domain/models"
+	"providerHub/internal/domain/model"
 )
 
 type SimpleResponse struct {
@@ -40,7 +40,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
+	var user model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
