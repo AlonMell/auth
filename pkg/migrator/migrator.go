@@ -32,7 +32,7 @@ func New(db *sql.DB, path, table string, major, minor int) *Config {
 
 // TODO: Сделать автодобавление новой записи миграций
 // TODO: Сделать парсинг файлов в горутинах (И последовательное выполнение скриптов)
-// TODO: Сделать возможность отката к предыдущим версиям
+// TODO: Сделать возможность отката к предыдущим версиям (добавить up/down)
 // TODO: Возможно, ускорить поиск подходящего номера файла
 
 func Migrate(cfg *Config) error {
@@ -130,14 +130,7 @@ func (c *Config) exec(name string) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	// TODO: сделать подготовку с горутинами
-	stmt, err := c.db.Prepare(string(script))
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec()
+	_, err = c.db.Exec(string(script))
 	return err
 }
 
