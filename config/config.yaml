@@ -13,6 +13,6 @@ migrations:
     sql_path: "./internal/storage/postgres/migrations/"
     table_name: "migrations_history"
 http_server:
-  address: "localhost:8082"
+  address: "localhost:8080"
   timeout: 5s
   idle_timeout: 60s

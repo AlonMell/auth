@@ -3,11 +3,13 @@ package main
 import (
 	"log/slog"
 	"os"
+	"os/signal"
 	"providerHub/internal/config"
 	"providerHub/internal/httpServer"
 	"providerHub/internal/storage/postgres"
 	"providerHub/pkg/logger"
 	"providerHub/pkg/logger/sl"
+	"syscall"
 )
 
 const (
@@ -25,16 +27,20 @@ func main() {
 
 	storage, err := postgres.New(cfg, log)
 	if err != nil {
-		log.Error("Error with start db postgres!", sl.Err(err))
+		log.Error("error with start db postgres!", sl.Err(err))
 		os.Exit(1)
 	}
 	_ = storage
 
-	err = httpServer.Run()
-	if err != nil {
-		log.Error("Error with start http server:", sl.Err(err))
-		os.Exit(1)
-	}
+	server := httpServer.New(log, cfg.Address, nil)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	go server.MustRun()
+
+	<-stop
+	server.GracefulShutdown()
+	log.Info("server stopped")
 }
 
 func setupLogger(env string) *slog.Logger {
