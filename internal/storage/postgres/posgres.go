@@ -40,30 +40,41 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 	return &Storage{db}, nil
 }
 
-func (s *Storage) SaveUser(user model.User) error {
+func (s *Storage) SaveUser(user model.User) (userId string, err error) {
 	const op = "storage.postgres.SaveUser"
 
-	query := `INSERT INTO users(login, email, password_hash, phone, is_active) VALUES ($1, $2, $3, $4, $5)`
+	//query := `INSERT INTO users(login, email, password_hash, phone, is_active) VALUES ($1, $2, $3, $4, $5)`
+	query := `INSERT INTO users(login, password_hash, is_active) VALUES ($1, $2, $3)`
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(user.Login, user.Email, user.PasswordHash, user.Phone, user.IsActive)
+	_, err = stmt.Exec(user.Login /*user.Email,*/, user.PasswordHash /*user.Phone,*/, user.IsActive)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	usr, err := s.User(user.Login)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return usr.ID, nil
 }
 
-func (s *Storage) GetUserByLogin(login string) (*model.User, error) {
-	const op = "storage.postgres.GetUserByLogin"
+func (s *Storage) User(login string) (*model.User, error) {
+	const op = "storage.postgres.User"
 
+	/*query := `
+	SELECT id, login, password_hash, phone, email, is_active
+	FROM users
+	WHERE login=$1`
+	*/
 	query := `
-		SELECT login, password_hash, phone, email, is_acrive 
+		SELECT id, login, password_hash, is_active 
 		FROM users 
 		WHERE login=$1`
 
@@ -74,7 +85,7 @@ func (s *Storage) GetUserByLogin(login string) (*model.User, error) {
 	defer stmt.Close()
 
 	var user model.User
-	err = stmt.QueryRow(login).Scan(&user)
+	err = stmt.QueryRow(login).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.IsActive)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

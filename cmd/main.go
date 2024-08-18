@@ -4,11 +4,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"providerHub/internal/app"
 	"providerHub/internal/config"
-	"providerHub/internal/httpServer"
-	"providerHub/internal/storage/postgres"
 	"providerHub/pkg/logger"
-	"providerHub/pkg/logger/sl"
 	"syscall"
 )
 
@@ -16,6 +14,14 @@ const (
 	envDev  = "dev"
 	envProd = "prod"
 )
+
+// TODO: Написать свой валидатор (go-playground/validator)
+// TODO: Написать свой хэшер паролей (bcrypt)
+// TODO: Написать свой генератор случайных чисел (math/rand)
+
+// TODO: Использовать константы для emptyValue
+// TODO: Сделать удобный регистратор зависимостей
+// TODO: Поработать с context
 
 func main() {
 	cfg := config.MustLoad()
@@ -25,21 +31,19 @@ func main() {
 	log.Info("starting server", slog.Any("cfg", cfg))
 	log.Debug("debug messages are enabled")
 
-	storage, err := postgres.New(cfg, log)
-	if err != nil {
-		log.Error("error with start db postgres!", sl.Err(err))
-		os.Exit(1)
-	}
-	_ = storage
+	application := app.New(log, cfg)
 
-	server := httpServer.New(log, cfg.Address, nil)
+	go application.Server.MustRun()
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	go server.MustRun()
+	signalReceived := <-stop
 
-	<-stop
-	server.GracefulShutdown()
+	log.Info("stopping application", slog.String("signal", signalReceived.String()))
+
+	application.Server.Stop()
+
 	log.Info("server stopped")
 }
 
