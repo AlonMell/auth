@@ -11,7 +11,6 @@ type Config struct {
 	Env        string        `yaml:"env" env:"ENV" env-required:"true"`
 	TokenTTL   time.Duration `yaml:"token_ttl" env-default:"1h"`
 	DB         `yaml:"db" env-required:"true"`
-	Migrations `yaml:"migrations" env-required:"true"`
 	HTTPServer `yaml:"http_server" env-required:"true"`
 }
 
@@ -27,13 +26,6 @@ type HTTPServer struct {
 	Address     string        `yaml:"address" env-required:"true"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"5s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
-}
-
-type Migrations struct {
-	MajorVersion int    `yaml:"major_version" env-default:"0"`
-	MinorVersion int    `yaml:"minor_version" env-default:"0"`
-	SqlPath      string `yaml:"sql_path" env-required:"true"`
-	Table        string `yaml:"table_name" env-required:"true"`
 }
 
 func MustLoad() *Config {

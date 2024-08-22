@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-type Config struct {
+type Migrator struct {
 	db              *sql.DB
 	Target, Current *Migration
 	Path            string
@@ -20,8 +20,8 @@ type Migration struct {
 	FileNumber   int
 }
 
-func New(db *sql.DB, path, table string, major, minor int) *Config {
-	return &Config{
+func New(db *sql.DB, path, table string, major, minor int) *Migrator {
+	return &Migrator{
 		db:      db,
 		Table:   table,
 		Path:    path,
@@ -35,55 +35,49 @@ func New(db *sql.DB, path, table string, major, minor int) *Config {
 // TODO: Сделать возможность отката к предыдущим версиям (добавить up/down)
 // TODO: Возможно, ускорить поиск подходящего номера файла
 
-func Migrate(cfg *Config) error {
-	const op = "migrator.Migrate"
-
-	if err := cfg.db.Ping(); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	if exists, err := cfg.tableExists(); err != nil {
+func (m *Migrator) Migrate() error {
+	if exists, err := m.tableExists(); err != nil {
 		return err
 	} else if !exists {
-		cfg.Target.findFileNumber(cfg.Path)
-		err = cfg.execBoundsFiles()
+		m.Target.findFileNumber(m.Path)
+		err = m.execBoundsFiles()
 		return err
 	}
 
-	if err := cfg.setCurrentVersion(); err != nil {
+	if err := m.setCurrentVersion(); err != nil {
 		return err
 	}
 
-	if cfg.Target.Major < cfg.Current.Major ||
-		cfg.Target.Major == cfg.Current.Major &&
-			cfg.Target.Minor <= cfg.Current.Minor {
+	if m.Target.Major < m.Current.Major ||
+		m.Target.Major == m.Current.Major &&
+			m.Target.Minor <= m.Current.Minor {
 		return nil
 	}
 
-	cfg.Target.findFileNumber(cfg.Path)
-	cfg.Current.FileNumber++
+	m.Target.findFileNumber(m.Path)
+	m.Current.FileNumber++
 
-	err := cfg.execBoundsFiles()
+	err := m.execBoundsFiles()
 
 	return err
 }
 
-func (c *Config) setCurrentVersion() error {
+func (m *Migrator) setCurrentVersion() error {
 	const op = "migrator.setCurrentVersion"
 
 	query := fmt.Sprintf(`
     SELECT major_version, minor_version, file_number
     FROM %s 
     ORDER BY date_applied DESC 
-    LIMIT 1;`, c.Table)
+    LIMIT 1;`, m.Table)
 
-	stmt, err := c.db.Prepare(query)
+	stmt, err := m.db.Prepare(query)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow().Scan(&c.Current.Major, &c.Current.Minor, &c.Current.FileNumber)
+	err = stmt.QueryRow().Scan(&m.Current.Major, &m.Current.Minor, &m.Current.FileNumber)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -92,18 +86,18 @@ func (c *Config) setCurrentVersion() error {
 }
 
 // execBoundsFiles execute all sql scripts in directory where first, second - it's bounds
-func (c *Config) execBoundsFiles() error {
-	const op = "migrator.exec"
+func (m *Migrator) execBoundsFiles() error {
+	const op = "migrator.execBoundsFiles"
 
-	first, second := c.Current.FileNumber, c.Target.FileNumber
+	first, second := m.Current.FileNumber, m.Target.FileNumber
 
-	files, err := os.ReadDir(c.Path)
+	files, err := os.ReadDir(m.Path)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	for first <= second {
-		err = c.exec(files[first].Name())
+		err = m.exec(files[first].Name())
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
@@ -114,10 +108,10 @@ func (c *Config) execBoundsFiles() error {
 }
 
 // exec execute sql script
-func (c *Config) exec(name string) error {
+func (m *Migrator) exec(name string) error {
 	const op = "migrator.exec"
 
-	path := filepath.Join(c.Path, name)
+	path := filepath.Join(m.Path, name)
 	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -130,11 +124,11 @@ func (c *Config) exec(name string) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = c.db.Exec(string(script))
+	_, err = m.db.Exec(string(script))
 	return err
 }
 
-func (c *Config) tableExists() (bool, error) {
+func (m *Migrator) tableExists() (bool, error) {
 	const op = "migrator.tableExists"
 
 	query := `
@@ -144,14 +138,14 @@ func (c *Config) tableExists() (bool, error) {
         AND table_name = $1
     );`
 
-	stmt, err := c.db.Prepare(query)
+	stmt, err := m.db.Prepare(query)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
 	var exists bool
-	err = stmt.QueryRow(c.Table).Scan(&exists)
+	err = stmt.QueryRow(m.Table).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}

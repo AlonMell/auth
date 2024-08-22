@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"providerHub/internal/config"
 	"providerHub/internal/domain/model"
-	"providerHub/pkg/migrator"
 )
 
 type Storage struct {
@@ -28,11 +27,6 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 
 	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	migratorConfig := migrator.New(db, cfg.SqlPath, cfg.Table, cfg.MajorVersion, cfg.MinorVersion)
-	if err = migrator.Migrate(migratorConfig); err != nil {
-		return nil, err
 	}
 
 	logger.Info("Successfully connected to the database!")

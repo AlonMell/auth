@@ -15,13 +15,14 @@ const (
 	envProd = "prod"
 )
 
-// TODO: Написать свой валидатор (go-playground/validator)
 // TODO: Написать свой хэшер паролей (bcrypt)
 // TODO: Написать свой генератор случайных чисел (math/rand)
-
-// TODO: Использовать константы для emptyValue
+// TODO: Сделать свои HealthCheck
+// TODO: render.JSON
+// TODO: Добавить TIMEOUT в конфиг
+// TODO: Доработать сохрангение пользователя
+// TODO: Поработать с пулом потоков в postgresql
 // TODO: Сделать удобный регистратор зависимостей
-// TODO: Поработать с context
 
 func main() {
 	cfg := config.MustLoad()

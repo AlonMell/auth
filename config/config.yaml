@@ -6,12 +6,6 @@ db:
   user: "alonmell"
   password: "zasode"
   database: "ProviderHub"
-migrations:
-    #major, minor: 0,  0 -> baseline
-    major_version: 0
-    minor_version: 0
-    sql_path: "./internal/storage/postgres/migrations/"
-    table_name: "migrations_history"
 http_server:
   address: "localhost:8080"
   timeout: 5s
