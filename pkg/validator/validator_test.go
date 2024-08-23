@@ -13,7 +13,7 @@ type User struct {
 	Phone    string `validate:"phone"`
 }
 
-func TestStructValidation(t *testing.T) {
+func TestStruct(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   User

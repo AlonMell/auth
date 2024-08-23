@@ -4,7 +4,7 @@ import resp "providerHub/internal/lib/api/response"
 
 type LoginRequest struct {
 	Login    string `json:"login" validate:"required,alpha"`
-	Password string `json:"password" validate:"required,alphanum"`
+	Password string `json:"password" validate:"required,password"`
 }
 
 type LoginResponse struct {
@@ -13,7 +13,7 @@ type LoginResponse struct {
 
 type RegisterRequest struct {
 	Login    string `json:"login" validate:"required,alpha"`
-	Password string `json:"password" validate:"required,alphanum"`
+	Password string `json:"password" validate:"required,password"`
 }
 
 type RegisterResponse struct {

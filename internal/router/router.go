@@ -5,9 +5,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/router/handler/auth"
 	"providerHub/internal/router/handler/auth/dto"
+	"providerHub/internal/router/handler/auth/login"
+	"providerHub/internal/router/handler/auth/register"
 	mw "providerHub/internal/router/middleware"
+	"time"
 )
 
 // Router is an interface that describes a router.
@@ -18,7 +20,7 @@ import (
 type Router interface {
 	http.Handler
 	Convey()
-	HandleAuth()
+	HandleAuth(tokenTTL time.Duration)
 }
 
 // Auth is an interface that describes the authentication service.
@@ -41,9 +43,9 @@ func New(logger *slog.Logger, auth Auth) *Mux {
 	}
 }
 
-func (m *Mux) Prepare() {
+func (m *Mux) Prepare(tokenTTL time.Duration) {
 	m.Convey()
-	m.HandleAuth()
+	m.HandleAuth(tokenTTL)
 }
 
 func (m *Mux) Convey() {
@@ -53,8 +55,7 @@ func (m *Mux) Convey() {
 	m.Use(middleware.Recoverer)
 }
 
-func (m *Mux) HandleAuth() {
-	m.Get("/", auth.Main)
-	m.Post("/register", auth.Register(m.logger, m.Auth))
-	m.Get("/login", auth.Login(m.logger, m.Auth))
+func (m *Mux) HandleAuth(tokenTTL time.Duration) {
+	m.Post("/register", register.New(m.logger, m.Auth))
+	m.Post("/login", login.New(m.logger, tokenTTL, m.Auth))
 }

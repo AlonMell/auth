@@ -2,11 +2,16 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"log/slog"
 	"providerHub/internal/config"
 	"providerHub/internal/domain/model"
+)
+
+const (
+	ErrUserExists = "user already exists"
 )
 
 type Storage struct {
@@ -37,6 +42,13 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 func (s *Storage) SaveUser(user model.User) (userId string, err error) {
 	const op = "storage.postgres.SaveUser"
 
+	exists, err := s.IsUserExists(user.Login)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	} else if exists {
+		return "", errors.New(ErrUserExists)
+	}
+
 	//query := `INSERT INTO users(login, email, password_hash, phone, is_active) VALUES ($1, $2, $3, $4, $5)`
 	query := `INSERT INTO users(login, password_hash, is_active) VALUES ($1, $2, $3)`
 
@@ -57,6 +69,26 @@ func (s *Storage) SaveUser(user model.User) (userId string, err error) {
 	}
 
 	return usr.ID, nil
+}
+
+func (s *Storage) IsUserExists(login string) (bool, error) {
+	const op = "storage.postgres.UserExists"
+
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE login=$1)`
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	var exists bool
+	err = stmt.QueryRow(login).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return exists, nil
 }
 
 func (s *Storage) User(login string) (*model.User, error) {

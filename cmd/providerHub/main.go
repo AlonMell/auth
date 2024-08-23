@@ -6,13 +6,8 @@ import (
 	"os/signal"
 	"providerHub/internal/app"
 	"providerHub/internal/config"
-	"providerHub/pkg/logger"
+	"providerHub/internal/lib/logger"
 	"syscall"
-)
-
-const (
-	envDev  = "dev"
-	envProd = "prod"
 )
 
 // TODO: Написать свой хэшер паролей (bcrypt)
@@ -27,7 +22,7 @@ const (
 func main() {
 	cfg := config.MustLoad()
 
-	log := setupLogger(cfg.Env)
+	log := logger.SetupLogger(cfg.Env)
 
 	log.Info("starting server", slog.Any("cfg", cfg))
 	log.Debug("debug messages are enabled")
@@ -46,31 +41,4 @@ func main() {
 	application.Server.Stop()
 
 	log.Info("server stopped")
-}
-
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
-
-	switch env {
-	case envDev:
-		log = setupDevelopLogger()
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
-	}
-
-	return log
-}
-
-func setupDevelopLogger() *slog.Logger {
-	opts := logger.DevelopHandlerOptions{
-		SlogOpts: &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		},
-	}
-
-	handler := opts.NewDevelopHandler(os.Stdout)
-
-	return slog.New(handler)
 }

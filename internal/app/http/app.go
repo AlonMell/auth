@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/config"
 	"providerHub/internal/router"
 	"providerHub/pkg/logger/sl"
 	"time"
@@ -20,11 +21,14 @@ type Server struct {
 
 // New creates a new server with the provided address and router.
 // If the router is nil, a new [Mux] will be created.
-func New(log *slog.Logger, address string, r router.Router) *Server {
+func New(log *slog.Logger, cfg config.HTTPServer, r router.Router) *Server {
 	return &Server{
 		Server: &http.Server{
-			Handler: r,
-			Addr:    address,
+			Handler:      r,
+			Addr:         cfg.Address,
+			WriteTimeout: cfg.Timeout,
+			ReadTimeout:  cfg.Timeout,
+			IdleTimeout:  cfg.IdleTimeout,
 		},
 		Logger: log,
 	}

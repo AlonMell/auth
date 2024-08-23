@@ -1,24 +1,27 @@
-package auth
+package register
 
 import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/internal/router/handler/auth/dto"
 	"providerHub/pkg/logger/sl"
+	"providerHub/pkg/validator"
 )
 
 type UserRegister interface {
 	RegisterUser(dto.RegisterRequest) (userId string, err error)
 }
 
-func Register(log *slog.Logger, reg UserRegister) func(w http.ResponseWriter, r *http.Request) {
+func New(
+	log *slog.Logger,
+	reg UserRegister,
+) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "endpoint.user.register.New"
+		const op = "handler.auth.register.New"
 
 		log = log.With(
 			slog.String("op", op),
@@ -35,22 +38,18 @@ func Register(log *slog.Logger, reg UserRegister) func(w http.ResponseWriter, r 
 
 		log.Info("request body decoded", slog.Any("request", req))
 
-		if err := validator.New().Struct(req); err != nil {
-			validateErr := err.(validator.ValidationErrors)
-
+		if err = validator.Struct(req); err != nil {
 			log.Error("invalid request", sl.Err(err))
-
-			render.JSON(w, r, resp.ValidationError(validateErr))
-
+			render.JSON(w, r, err)
 			return
 		}
 
 		userId, err := reg.RegisterUser(req)
 		if err != nil {
-			log.Error("error registering user", sl.Err(err))
+			render.JSON(w, r, resp.Error("error to register user"))
 			return
 		}
 
-		w.Write([]byte(userId))
+		render.JSON(w, r, userId)
 	}
 }

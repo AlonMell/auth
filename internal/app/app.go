@@ -28,9 +28,9 @@ func New(
 	authService := auth.New(log, storage, storage)
 
 	mux := router.New(log, authService)
-	mux.Prepare()
+	mux.Prepare(cfg.TokenTTL)
 
-	server := httpApp.New(log, cfg.Address, mux)
+	server := httpApp.New(log, cfg.HTTPServer, mux)
 
 	return &App{Server: server}
 }
