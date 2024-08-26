@@ -5,9 +5,9 @@ import (
 	"os"
 	httpApp "providerHub/internal/app/http"
 	"providerHub/internal/config"
+	"providerHub/internal/repository/postgres"
 	"providerHub/internal/router"
 	"providerHub/internal/service/auth"
-	"providerHub/internal/storage/postgres"
 	"providerHub/pkg/logger/sl"
 )
 

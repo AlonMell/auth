@@ -19,8 +19,7 @@ CREATE TABLE IF NOT EXISTS users
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,
-    login         VARCHAR(50)  NOT NULL UNIQUE,
-    --email         VARCHAR(100) UNIQUE CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+    email         VARCHAR(100) NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     password_hash VARCHAR(100) NOT NULL,
     --phone         VARCHAR(20) UNIQUE CHECK (phone ~ '^\+\d{1,11}$'),
     is_active     BOOLEAN          DEFAULT FALSE
@@ -58,8 +57,7 @@ CREATE TABLE IF NOT EXISTS role_permissions
     PRIMARY KEY (role_id, permission_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_login ON users (login);
---CREATE INDEX IF NOT EXISTS idx_email ON users (email);
+CREATE INDEX IF NOT EXISTS idx_email ON users (email);
 
 CREATE OR REPLACE FUNCTION update_timestamp()
     RETURNS TRIGGER AS

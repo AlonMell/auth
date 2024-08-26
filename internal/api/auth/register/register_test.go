@@ -2,7 +2,7 @@ package register_test
 
 import (
 	"fmt"
-	"providerHub/internal/router/handler/auth/dto"
+	"providerHub/internal/api/auth/dto"
 )
 
 type mockUserRegister struct{}

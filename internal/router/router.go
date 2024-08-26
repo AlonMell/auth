@@ -5,9 +5,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/router/handler/auth/dto"
-	"providerHub/internal/router/handler/auth/login"
-	"providerHub/internal/router/handler/auth/register"
+	"providerHub/internal/api/auth/dto"
+	"providerHub/internal/api/auth/login"
+	"providerHub/internal/api/auth/register"
 	mw "providerHub/internal/router/middleware"
 	"time"
 )

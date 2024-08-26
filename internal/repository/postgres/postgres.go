@@ -14,6 +14,7 @@ const (
 	ErrUserExists = "user already exists"
 )
 
+// TODO: Добавить RWMutex и Пул потоков
 type Storage struct {
 	db *sql.DB
 }
@@ -39,10 +40,10 @@ func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
 	return &Storage{db}, nil
 }
 
-func (s *Storage) SaveUser(user model.User) (userId string, err error) {
+func (s *Storage) SaveUser(user model.User) (uuid string, err error) {
 	const op = "storage.postgres.SaveUser"
 
-	exists, err := s.IsUserExists(user.Login)
+	exists, err := s.IsUserExists(user.Email)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	} else if exists {
@@ -50,7 +51,7 @@ func (s *Storage) SaveUser(user model.User) (userId string, err error) {
 	}
 
 	//query := `INSERT INTO users(login, email, password_hash, phone, is_active) VALUES ($1, $2, $3, $4, $5)`
-	query := `INSERT INTO users(login, password_hash, is_active) VALUES ($1, $2, $3)`
+	query := `INSERT INTO users(email, password_hash, is_active) VALUES ($1, $2, $3)`
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
@@ -58,23 +59,23 @@ func (s *Storage) SaveUser(user model.User) (userId string, err error) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(user.Login /*user.Email,*/, user.PasswordHash /*user.Phone,*/, user.IsActive)
+	_, err = stmt.Exec(user.Email, user.PasswordHash /*user.Phone,*/, user.IsActive)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	usr, err := s.User(user.Login)
+	usr, err := s.User(user.Email)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return usr.ID, nil
+	return usr.UUID, nil
 }
 
-func (s *Storage) IsUserExists(login string) (bool, error) {
+func (s *Storage) IsUserExists(email string) (bool, error) {
 	const op = "storage.postgres.UserExists"
 
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE login=$1)`
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
@@ -83,7 +84,7 @@ func (s *Storage) IsUserExists(login string) (bool, error) {
 	defer stmt.Close()
 
 	var exists bool
-	err = stmt.QueryRow(login).Scan(&exists)
+	err = stmt.QueryRow(email).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
@@ -91,7 +92,7 @@ func (s *Storage) IsUserExists(login string) (bool, error) {
 	return exists, nil
 }
 
-func (s *Storage) User(login string) (*model.User, error) {
+func (s *Storage) User(email string) (*model.User, error) {
 	const op = "storage.postgres.User"
 
 	/*query := `
@@ -100,9 +101,9 @@ func (s *Storage) User(login string) (*model.User, error) {
 	WHERE login=$1`
 	*/
 	query := `
-		SELECT id, login, password_hash, is_active 
+		SELECT id, email, password_hash, is_active 
 		FROM users 
-		WHERE login=$1`
+		WHERE email=$1`
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
@@ -111,7 +112,7 @@ func (s *Storage) User(login string) (*model.User, error) {
 	defer stmt.Close()
 
 	var user model.User
-	err = stmt.QueryRow(login).Scan(&user.ID, &user.Login, &user.PasswordHash, &user.IsActive)
+	err = stmt.QueryRow(email).Scan(&user.UUID, &user.Email, &user.PasswordHash, &user.IsActive)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

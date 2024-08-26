@@ -1,10 +1,9 @@
 package model
 
 type User struct {
-	ID           string
-	Login        string
+	UUID         string
+	Email        string
 	PasswordHash []byte
 	//Phone        string
-	//Email        string
 	IsActive bool
 }

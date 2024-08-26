@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
+	"providerHub/internal/api/auth/dto"
 	"providerHub/internal/domain/model"
 	"providerHub/internal/lib/jwt"
-	"providerHub/internal/router/handler/auth/dto"
 	"time"
 )
 
@@ -21,7 +21,7 @@ type UserSaver interface {
 }
 
 type UserProvider interface {
-	User(login string) (*model.User, error)
+	User(email string) (*model.User, error)
 }
 
 func New(
@@ -45,7 +45,7 @@ func (a *Auth) Token(r dto.LoginRequest) (string, error) {
 
 	log.Info("login user")
 
-	user, err := a.usrProvider.User(r.Login)
+	user, err := a.usrProvider.User(r.Email)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -75,14 +75,14 @@ func (a *Auth) RegisterUser(r dto.RegisterRequest) (string, error) {
 	}
 
 	user := model.User{
-		Login:        r.Login,
+		Email:        r.Email,
 		PasswordHash: hash,
 	}
 
-	userId, err := a.usrSaver.SaveUser(user)
+	uuid, err := a.usrSaver.SaveUser(user)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return userId, nil
+	return uuid, nil
 }

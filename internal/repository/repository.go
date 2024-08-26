@@ -1,4 +1,4 @@
-package storage
+package repository
 
 const (
 	ErrURLNotFound = "url not found"
