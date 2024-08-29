@@ -2,11 +2,10 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 	"providerHub/internal/handler/auth"
+	bc "providerHub/internal/lib/bcrypt"
 	"time"
 
 	"providerHub/internal/domain/model"
@@ -16,6 +15,7 @@ import (
 
 var (
 	ErrInvalidPassword = errors.New("invalid password")
+	ErrGeneratingToken = errors.New("error generating token")
 )
 
 type UserGetter interface {
@@ -42,7 +42,7 @@ func New(
 
 const secret = "secretsecretsecretsecretsecret"
 
-func (a *Auth) Token(r auth.LoginRequest) (string, error) {
+func (a *Auth) Token(r auth.LoginRequest, tokentTTL time.Duration) (string, error) {
 	const op = "service.Auth.Login"
 
 	log := a.log.With(slog.String("op", op))
@@ -51,16 +51,16 @@ func (a *Auth) Token(r auth.LoginRequest) (string, error) {
 
 	user, err := a.usrGetter.UserByEmail(r.Email)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", service.Catch(err, op)
 	}
 
-	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(r.Password))
+	err = bc.ComparePassword(user.PasswordHash, r.Password)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, ErrInvalidPassword)
+		return "", service.Catch(err, op)
 	}
-	token, err := jwt.NewToken(*user, time.Hour, secret)
+	token, err := jwt.NewToken(*user, tokentTTL, secret)
 	if err != nil {
-		return "", fmt.Errorf("error generating token: %v", err)
+		return "", service.Catch(err, op)
 	}
 
 	return token, nil
@@ -73,9 +73,9 @@ func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
 
 	log.Info("registering user")
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
+	hash, err := bc.GeneratePassword(r.Password)
 	if err != nil {
-		return "", fmt.Errorf("error hashing password: %v", err)
+		return "", service.Catch(err, op)
 	}
 
 	user := model.User{
@@ -86,7 +86,7 @@ func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
 
 	id, err := a.usrSaver.SaveUser(user)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", service.Catch(err, op)
 	}
 
 	return id, nil

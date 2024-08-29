@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -10,7 +9,6 @@ import (
 	"providerHub/internal/handler/user"
 	bc "providerHub/internal/lib/bcrypt"
 	"providerHub/internal/service"
-	"providerHub/pkg/logger/sl"
 )
 
 type Updater interface {
@@ -54,7 +52,7 @@ func (p *Provider) Get(r user.GetUserRequest) (u *model.User, err error) {
 
 	u, err = p.g.UserById(r.UUID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, service.Catch(err, op)
 	}
 
 	return
@@ -65,8 +63,7 @@ func (p *Provider) Create(r user.CreateUserRequest) (string, error) {
 
 	pass, err := bc.GeneratePassword(r.Password)
 	if err != nil {
-		p.log.Error("%v", sl.Err(err))
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", service.Catch(err, op)
 	}
 
 	u := model.User{
@@ -78,7 +75,7 @@ func (p *Provider) Create(r user.CreateUserRequest) (string, error) {
 
 	id, err := p.s.SaveUser(u)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", service.Catch(err, op)
 	}
 
 	return id, nil
@@ -89,7 +86,7 @@ func (p *Provider) Delete(r user.DeleteUserRequest) error {
 
 	err := p.d.DeleteUser(r.UUID)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return service.Catch(err, op)
 	}
 
 	return nil
@@ -100,8 +97,7 @@ func (p *Provider) Update(r user.UpdateUserRequest) error {
 
 	pass, err := bc.GeneratePassword(r.Password)
 	if err != nil {
-		p.log.Error("%v", sl.Err(err))
-		return fmt.Errorf("%s: %w", op, err)
+		return service.Catch(err, op)
 	}
 
 	u := model.User{
@@ -113,7 +109,7 @@ func (p *Provider) Update(r user.UpdateUserRequest) error {
 
 	err = p.u.UpdateUser(u)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return service.Catch(err, op)
 	}
 
 	return nil

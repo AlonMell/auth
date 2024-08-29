@@ -10,7 +10,6 @@ type GetUserResponse struct {
 	Email        string `json:"email"`
 	PasswordHash []byte `json:"password_hash"`
 	IsActive     bool   `json:"is_active"`
-	resp.Response
 }
 
 type UpdateUserRequest struct {
@@ -32,7 +31,6 @@ type CreateUserRequest struct {
 
 type CreateUserResponse struct {
 	UUID string `json:"uuid"`
-	resp.Response
 }
 
 type DeleteUserRequest struct {

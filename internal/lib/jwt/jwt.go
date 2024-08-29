@@ -1,10 +1,13 @@
 package jwt
 
 import (
+	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"providerHub/internal/domain/model"
 	"time"
 )
+
+var ErrGeneratingToken = errors.New("error generating token")
 
 func NewToken(user model.User, duration time.Duration, secret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -16,7 +19,7 @@ func NewToken(user model.User, duration time.Duration, secret string) (string, e
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", ErrGeneratingToken
 	}
 
 	return tokenString, nil
