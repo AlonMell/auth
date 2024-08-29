@@ -2,10 +2,9 @@ package login
 
 import (
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/api/auth/dto"
+	"providerHub/internal/handler/auth"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/logger/sl"
@@ -14,7 +13,7 @@ import (
 )
 
 type UserProvider interface {
-	Token(dto.LoginRequest) (token string, err error)
+	Token(auth.LoginRequest) (token string, err error)
 }
 
 func New(
@@ -30,10 +29,10 @@ func New(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req dto.LoginRequest
+		var req auth.LoginRequest
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			log.Error("error parsing JSON", sl.Err(err))
-			render.JSON(w, r, resp.Error("error to decode request"))
+			resp.WriteJSON(w, r, resp.Error("error to decode request"))
 			return
 		}
 
@@ -41,14 +40,14 @@ func New(
 
 		if err := validator.Struct(req); err != nil {
 			log.Error("invalid request", sl.Err(err))
-			render.JSON(w, r, err)
+			resp.WriteJSON(w, r, err)
 			return
 		}
 
 		token, err := usrProvider.Token(req)
 		if err != nil {
 			log.Error("error during login", sl.Err(err))
-			render.JSON(w, r, resp.Error("login failed"))
+			resp.WriteJSON(w, r, resp.Error("login failed"))
 			return
 		}
 
@@ -62,5 +61,7 @@ func New(
 			Expires: time.Now().Add(tokentTTL),
 			//Domain:   "example.com",
 		})
+
+		resp.WriteJSON(w, r, resp.Ok())
 	}
 }

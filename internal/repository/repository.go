@@ -1,6 +1,10 @@
 package repository
 
-const (
-	ErrURLNotFound = "url not found"
-	ErrUserExists  = "user already exists"
+import (
+	"errors"
+)
+
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrUserExists   = errors.New("user already exists")
 )

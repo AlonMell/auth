@@ -2,12 +2,12 @@ package register_test
 
 import (
 	"fmt"
-	"providerHub/internal/api/auth/dto"
+	"providerHub/internal/handler/auth"
 )
 
 type mockUserRegister struct{}
 
-func (m *mockUserRegister) Register(req dto.RegisterRequest) (string, error) {
+func (m *mockUserRegister) Register(req auth.RegisterRequest) (string, error) {
 	if req.Login == "existing_user" {
 		return "", fmt.Errorf("user already exists")
 	}

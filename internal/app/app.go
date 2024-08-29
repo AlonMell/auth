@@ -3,11 +3,13 @@ package app
 import (
 	"log/slog"
 	"os"
+
 	httpApp "providerHub/internal/app/http"
 	"providerHub/internal/config"
 	"providerHub/internal/repository/postgres"
 	"providerHub/internal/router"
 	"providerHub/internal/service/auth"
+	"providerHub/internal/service/user"
 	"providerHub/pkg/logger/sl"
 )
 
@@ -26,8 +28,9 @@ func New(
 	}
 
 	authService := auth.New(log, storage, storage)
+	userService := user.New(log, storage, storage, storage, storage)
 
-	mux := router.New(log, authService)
+	mux := router.New(log, authService, userService)
 	mux.Prepare(cfg.TokenTTL)
 
 	server := httpApp.New(log, cfg.HTTPServer, mux)

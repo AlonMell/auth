@@ -15,12 +15,14 @@ import (
 // - email
 // - phone
 // - password
+// - uuid
 
 var regexMap = map[string]*regexp.Regexp{
 	"alpha":    regexp.MustCompile(`^[a-zA-Z]+$`),
 	"alphanum": regexp.MustCompile(`^[a-zA-Z0-9]+$`),
 	"email":    regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`),
 	"phone":    regexp.MustCompile(`^\+?[0-9]{1,15}$`),
+	"uuid":     regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$`),
 }
 
 // Field represents a field in a struct.
@@ -76,7 +78,9 @@ func Struct(s any) error {
 
 func (f *Field) validate() error {
 	for _, tag := range f.Tags {
-		if err := f.validateTag(tag); err != nil {
+		if tag == "" {
+			continue
+		} else if err := f.validateTag(tag); err != nil {
 			return err
 		}
 	}

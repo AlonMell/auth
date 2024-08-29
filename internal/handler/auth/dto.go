@@ -1,4 +1,4 @@
-package dto
+package auth
 
 import resp "providerHub/internal/lib/api/response"
 
@@ -17,6 +17,6 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	UserId string `json:"user_id"`
+	UUID string `json:"uuid"`
 	resp.Response
 }
