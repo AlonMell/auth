@@ -2,13 +2,14 @@ package config
 
 import (
 	"flag"
-	"github.com/ilyakaznacheev/cleanenv"
 	"os"
 	"time"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env        string        `yaml:"env" env:"ENV" env-required:"true"`
+	Env        string        `yaml:"env" env-required:"true"`
 	TokenTTL   time.Duration `yaml:"token_ttl" env-default:"1h"`
 	DB         `yaml:"db" env-required:"true"`
 	HTTPServer `yaml:"http_server" env-required:"true"`

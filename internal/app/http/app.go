@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
+
 	"providerHub/internal/config"
 	"providerHub/internal/router"
 	"providerHub/pkg/logger/sl"
-	"time"
 )
 
 // Server is a struct that represents an HTTP server.

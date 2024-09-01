@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/lib/pq"
+
 	"providerHub/pkg/migrator"
 )
 

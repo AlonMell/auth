@@ -4,10 +4,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
+
 	"providerHub/internal/app"
 	"providerHub/internal/config"
 	"providerHub/internal/lib/logger"
-	"syscall"
 )
 
 // TODO: Написать свой генератор случайных чисел (math/rand)

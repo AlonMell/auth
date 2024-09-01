@@ -2,14 +2,17 @@ package jwt
 
 import (
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"providerHub/internal/domain/model"
+	"fmt"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+
+	"providerHub/internal/domain/model"
 )
 
 var ErrGeneratingToken = errors.New("error generating token")
 
-func NewToken(user model.User, duration time.Duration, secret string) (string, error) {
+func NewToken(user *model.User, duration time.Duration, secret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -19,7 +22,7 @@ func NewToken(user model.User, duration time.Duration, secret string) (string, e
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", ErrGeneratingToken
+		return "", fmt.Errorf("%w: %v", ErrGeneratingToken, err)
 	}
 
 	return tokenString, nil

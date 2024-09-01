@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log/slog"
+	"sync"
+
+	_ "github.com/lib/pq"
+
 	"providerHub/internal/config"
 	"providerHub/internal/domain/model"
 	repo "providerHub/internal/repository"
-	"sync"
 )
 
 // TODO: Добавить Пул потоков

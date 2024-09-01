@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+
 	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/service"
+	serr "providerHub/internal/service/errors"
 	"providerHub/pkg/logger/sl"
 )
 
@@ -31,19 +32,19 @@ func NewCatcher(op string, log *slog.Logger, w http.ResponseWriter, r *http.Requ
 }
 
 func (c *Catcher) Catch(err error) {
-	var errKind *service.CustomError
+	var errKind *serr.CustomError
 
 	if errors.As(err, &errKind) {
 		switch errKind.Kind {
-		case service.UserKind:
+		case serr.UserKind:
 			resp.WriteJSON(c.w, c.r, err)
 			c.w.WriteHeader(http.StatusBadRequest)
 			return
-		case service.InternalKind:
+		case serr.InternalKind:
 			c.log.Error("internal error", c.op, sl.Err(err))
 			http.Error(c.w, "internal error", http.StatusInternalServerError)
 			return
-		case service.SystemKind:
+		case serr.SystemKind:
 			panic(err)
 		}
 	}

@@ -1,16 +1,16 @@
 package router
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/handler/user/get"
 	"time"
 
-	mw "providerHub/internal/router/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/domain/model"
+	"providerHub/internal/handler/user/get"
+	mw "providerHub/internal/router/middleware"
 
 	"providerHub/internal/handler/auth"
 	"providerHub/internal/handler/auth/login"
@@ -37,7 +37,7 @@ type Router interface {
 // Auth is an interface that describes the authentication service.
 type Auth interface {
 	RegisterUser(auth.RegisterRequest) (userId string, err error)
-	Token(auth.LoginRequest) (token string, err error)
+	Token(auth.LoginRequest, time.Duration) (token string, err error)
 }
 
 // UserProvider is an interface that describes the user service.

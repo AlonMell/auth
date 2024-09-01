@@ -1,9 +1,11 @@
 package get
 
 import (
-	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
+
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler"
 	"providerHub/internal/handler/user"

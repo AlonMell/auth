@@ -1,9 +1,11 @@
 package post
 
 import (
-	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
+
 	"providerHub/internal/handler"
 	"providerHub/internal/handler/user"
 	resp "providerHub/internal/lib/api/response"

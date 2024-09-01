@@ -9,6 +9,7 @@ import (
 	"providerHub/internal/handler/user"
 	bc "providerHub/internal/lib/bcrypt"
 	"providerHub/internal/service"
+	serr "providerHub/internal/service/errors"
 )
 
 type Updater interface {
@@ -50,9 +51,12 @@ func New(
 func (p *Provider) Get(r user.GetUserRequest) (u *model.User, err error) {
 	const op = "user.Get"
 
+	log := p.log.With(slog.String("op", op))
+	log.Debug("get user from db")
+
 	u, err = p.g.UserById(r.UUID)
 	if err != nil {
-		return nil, service.Catch(err, op)
+		return nil, serr.Catch(err, op)
 	}
 
 	return
@@ -61,9 +65,12 @@ func (p *Provider) Get(r user.GetUserRequest) (u *model.User, err error) {
 func (p *Provider) Create(r user.CreateUserRequest) (string, error) {
 	const op = "user.Create"
 
+	log := p.log.With(slog.String("op", op))
+	log.Debug("creating user")
+
 	pass, err := bc.GeneratePassword(r.Password)
 	if err != nil {
-		return "", service.Catch(err, op)
+		return "", serr.Catch(err, op)
 	}
 
 	u := model.User{
@@ -75,7 +82,7 @@ func (p *Provider) Create(r user.CreateUserRequest) (string, error) {
 
 	id, err := p.s.SaveUser(u)
 	if err != nil {
-		return "", service.Catch(err, op)
+		return "", serr.Catch(err, op)
 	}
 
 	return id, nil
@@ -84,9 +91,12 @@ func (p *Provider) Create(r user.CreateUserRequest) (string, error) {
 func (p *Provider) Delete(r user.DeleteUserRequest) error {
 	const op = "user.Delete"
 
+	log := p.log.With(slog.String("op", op))
+	log.Debug("delete user from db")
+
 	err := p.d.DeleteUser(r.UUID)
 	if err != nil {
-		return service.Catch(err, op)
+		return serr.Catch(err, op)
 	}
 
 	return nil
@@ -95,9 +105,12 @@ func (p *Provider) Delete(r user.DeleteUserRequest) error {
 func (p *Provider) Update(r user.UpdateUserRequest) error {
 	const op = "user.Update"
 
+	log := p.log.With(slog.String("op", op))
+	log.Debug("update user in db")
+
 	pass, err := bc.GeneratePassword(r.Password)
 	if err != nil {
-		return service.Catch(err, op)
+		return serr.Catch(err, op)
 	}
 
 	u := model.User{
@@ -109,7 +122,7 @@ func (p *Provider) Update(r user.UpdateUserRequest) error {
 
 	err = p.u.UpdateUser(u)
 	if err != nil {
-		return service.Catch(err, op)
+		return serr.Catch(err, op)
 	}
 
 	return nil
