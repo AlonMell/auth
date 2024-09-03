@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"providerHub/internal/lib/jwt"
-	repo "providerHub/internal/repository"
+	repo "providerHub/internal/repo"
 )
 
 var (

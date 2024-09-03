@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"database/sql"
@@ -8,8 +8,6 @@ import (
 
 	"providerHub/internal/domain/model"
 )
-
-// TODO: Добавить Пул потоков
 
 var (
 	ErrUserNotFound = errors.New("user not found")

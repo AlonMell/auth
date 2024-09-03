@@ -3,10 +3,11 @@ package app
 import (
 	"log/slog"
 	"os"
+	"providerHub/internal/repo"
 
 	httpApp "providerHub/internal/app/http"
+	"providerHub/internal/app/postgres"
 	"providerHub/internal/config"
-	"providerHub/internal/repository/postgres"
 	"providerHub/internal/router"
 	"providerHub/internal/service/auth"
 	"providerHub/internal/service/user"
@@ -21,14 +22,16 @@ func New(
 	log *slog.Logger,
 	cfg *config.Config,
 ) *App {
-	storage, err := postgres.New(cfg, log)
+	db, err := postgres.New(cfg, log)
 	if err != nil {
 		log.Error("error with start db postgres!", sl.Err(err))
 		os.Exit(1)
 	}
 
-	authService := auth.New(log, storage, storage)
-	userService := user.New(log, storage, storage, storage, storage)
+	userRepo := repo.NewUserRepo(db)
+
+	authService := auth.New(log, userRepo, userRepo)
+	userService := user.New(log, userRepo, userRepo, userRepo, userRepo)
 
 	mux := router.New(log, authService, userService)
 	mux.Prepare(cfg.TokenTTL)
