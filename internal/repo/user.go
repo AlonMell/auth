@@ -1,56 +1,36 @@
-package postgres
+package repository
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
-	"sync"
-
 	_ "github.com/lib/pq"
 
-	"providerHub/internal/config"
 	"providerHub/internal/domain/model"
-	repo "providerHub/internal/repository"
 )
 
 // TODO: Добавить Пул потоков
 
-type Storage struct {
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrUserExists   = errors.New("user already exists")
+)
+
+type UserRepo struct {
 	db *sql.DB
-	mu sync.RWMutex
 }
 
-func New(cfg *config.Config, logger *slog.Logger) (*Storage, error) {
-	const op = "storage.postgres.New"
-
-	sourceInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database)
-
-	db, err := sql.Open("postgres", sourceInfo)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	logger.Info("Successfully connected to the database!")
-
-	return &Storage{db: db}, nil
+func NewUserRepo(db *sql.DB) *UserRepo {
+	return &UserRepo{db: db}
 }
 
-func (s *Storage) SaveUser(user model.User) (string, error) {
+func (s *UserRepo) SaveUser(user model.User) (string, error) {
 	const op = "storage.postgres.SaveUser"
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
-	_, err := s.userById(user.UUID)
+	_, err := s.UserById(user.UUID)
 	if err == nil {
-		return "", repo.ErrUserExists
-	} else if !errors.Is(err, repo.ErrUserNotFound) {
+		return "", ErrUserExists
+	} else if !errors.Is(err, ErrUserNotFound) {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -67,7 +47,7 @@ func (s *Storage) SaveUser(user model.User) (string, error) {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	usr, err := s.userById(user.UUID)
+	usr, err := s.UserById(user.UUID)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -75,13 +55,7 @@ func (s *Storage) SaveUser(user model.User) (string, error) {
 	return usr.UUID, nil
 }
 
-func (s *Storage) UserById(uuid string) (*model.User, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.userById(uuid)
-}
-
-func (s *Storage) userById(uuid string) (*model.User, error) {
+func (s *UserRepo) UserById(uuid string) (*model.User, error) {
 	const op = "storage.postgres.UserById"
 
 	query := `
@@ -104,16 +78,8 @@ func (s *Storage) userById(uuid string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *Storage) UserByEmail(email string) (*model.User, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.userByEmail(email)
-}
-
-func (s *Storage) DeleteUser(uuid string) error {
+func (s *UserRepo) DeleteUser(uuid string) error {
 	const op = "storage.postgres.DeleteUser"
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	query := `DELETE FROM users WHERE id=$1`
 
@@ -131,10 +97,8 @@ func (s *Storage) DeleteUser(uuid string) error {
 	return nil
 }
 
-func (s *Storage) UpdateUser(user model.User) error {
+func (s *UserRepo) UpdateUser(user model.User) error {
 	const op = "storage.postgres.UpdateUser"
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	query := `UPDATE users SET email=$1, password_hash=$2, is_active=$3 WHERE id=$4`
 
@@ -152,7 +116,7 @@ func (s *Storage) UpdateUser(user model.User) error {
 	return nil
 }
 
-func (s *Storage) userByEmail(email string) (*model.User, error) {
+func (s *UserRepo) UserByEmail(email string) (*model.User, error) {
 	const op = "storage.postgres.User"
 
 	query := `
@@ -178,7 +142,7 @@ func (s *Storage) userByEmail(email string) (*model.User, error) {
 func errorHandler(err error, op string) error {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return repo.ErrUserNotFound
+		return ErrUserNotFound
 	default:
 		return fmt.Errorf("%s: %w", op, err)
 	}
