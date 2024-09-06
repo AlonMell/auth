@@ -9,3 +9,9 @@ migrate:
     		--table="migrations_history" \
     		--major=0 \
     		--minor=0
+dockerRun:
+	docker run -p 8080:8080 --name main provider-hub
+dockerBuild:
+	docker build . -t provider-hub
+swagger:
+	swag init -g ./cmd/providerHub/main.go

@@ -38,11 +38,11 @@ func (c *Catcher) Catch(err error) {
 		switch errKind.Kind {
 		case serr.UserKind:
 			resp.WriteJSON(c.w, c.r, err)
-			c.w.WriteHeader(http.StatusBadRequest)
+			c.w.WriteHeader(errKind.Code)
 			return
 		case serr.InternalKind:
 			c.log.Error("internal error", c.op, sl.Err(err))
-			http.Error(c.w, "internal error", http.StatusInternalServerError)
+			http.Error(c.w, "internal error", errKind.Code)
 			return
 		case serr.SystemKind:
 			panic(err)

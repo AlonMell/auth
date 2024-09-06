@@ -17,7 +17,7 @@ WORKDIR /providerHub
 
 ENV CONFIG_PATH=./config/config.yaml
 
-COPY --from=builder /providerHub/bin/providerHub .
-COPY --from=builder /providerHub/config ./config
+COPY --from=builder /app/bin/providerHub .
+COPY --from=builder /app/config ./config
 
 CMD ["./providerHub"]

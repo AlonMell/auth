@@ -44,25 +44,3 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 	w.Write(buf.Bytes())
 }
-
-/*func ValidationError(errs validator.ValidationErrors) Response {
-	var errsMsgs []string
-
-	for _, err := range errs {
-		switch err.ActualTag() {
-		case "required":
-			errsMsgs = append(errsMsgs, fmt.Sprintf("Field %s is required", err.Field()))
-		case "alpha":
-			errsMsgs = append(errsMsgs, fmt.Sprintf("Field %s must contain only letters", err.Field()))
-		case "alphanum":
-			errsMsgs = append(errsMsgs, fmt.Sprintf("Field %s must contain only letters and numbers", err.Field()))
-		default:
-			errsMsgs = append(errsMsgs, fmt.Sprintf("Field %s is invalid", err.Field()))
-		}
-	}
-
-	return Response{
-		Status: StatusError,
-		Error:  strings.Join(errsMsgs, ", "),
-	}
-}*/

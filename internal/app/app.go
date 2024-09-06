@@ -34,7 +34,7 @@ func New(
 	userService := user.New(log, userRepo, userRepo, userRepo, userRepo)
 
 	mux := router.New(log, authService, userService)
-	mux.Prepare(cfg.TokenTTL)
+	mux.Prepare(cfg.JWT)
 
 	server := httpApp.New(log, cfg.HTTPServer, mux)
 

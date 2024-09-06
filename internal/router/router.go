@@ -1,12 +1,17 @@
 package router
 
 import (
-	"log/slog"
-	"net/http"
-	"time"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"log/slog"
+	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/swaggo/http-swagger/example/go-chi/docs"
+
+	"providerHub/internal/config"
+	"providerHub/internal/domain/dto"
+	"providerHub/internal/handler/auth/refresh"
 
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler/user/get"
@@ -30,14 +35,15 @@ import (
 type Router interface {
 	http.Handler
 	Convey()
-	HandleAuth(tokenTTL time.Duration)
+	HandleAuth(cfg config.JWT)
 	HandleUsers()
 }
 
 // Auth is an interface that describes the authentication service.
 type Auth interface {
 	RegisterUser(auth.RegisterRequest) (userId string, err error)
-	Token(auth.LoginRequest, time.Duration) (token string, err error)
+	Token(auth.LoginRequest, config.JWT) (jwt *dto.JWT, err error)
+	RefreshToken(auth.RefreshRequest, config.JWT) (accessToken string, err error)
 }
 
 // UserProvider is an interface that describes the user service.
@@ -64,10 +70,11 @@ func New(logger *slog.Logger, auth Auth, provider UserProvider) *Mux {
 	}
 }
 
-func (m *Mux) Prepare(tokenTTL time.Duration) {
+func (m *Mux) Prepare(cfg config.JWT) {
 	m.Convey()
 	m.HandleUsers()
-	m.HandleAuth(tokenTTL)
+	m.HandleAuth(cfg)
+	m.Swagger()
 }
 
 func (m *Mux) Convey() {
@@ -78,6 +85,12 @@ func (m *Mux) Convey() {
 	m.Use(middleware.URLFormat)
 }
 
+func (m *Mux) Swagger() {
+	m.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/docs/swagger.json"),
+	))
+}
+
 func (m *Mux) HandleUsers() {
 	m.Get("/api/v1/users", get.New(m.logger, m.UserProvider))
 	m.Post("/api/v1/users", post.New(m.logger, m.UserProvider))
@@ -85,7 +98,8 @@ func (m *Mux) HandleUsers() {
 	m.Delete("/api/v1/users", del.New(m.logger, m.UserProvider))
 }
 
-func (m *Mux) HandleAuth(tokenTTL time.Duration) {
+func (m *Mux) HandleAuth(cfg config.JWT) {
 	m.Post("/register", register.New(m.logger, m.Auth))
-	m.Post("/login", login.New(m.logger, tokenTTL, m.Auth))
+	m.Post("/login", login.New(m.logger, cfg, m.Auth))
+	m.Post("/refresh", refresh.New(m.logger, m.Auth, cfg))
 }

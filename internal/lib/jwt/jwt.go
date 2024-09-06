@@ -6,24 +6,57 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-
-	"providerHub/internal/domain/model"
 )
 
-var ErrGeneratingToken = errors.New("error generating token")
+type Claims struct {
+	Email string `json:"email"`
+	jwt.RegisteredClaims
+}
 
-func NewToken(user *model.User, duration time.Duration, secret string) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
+var (
+	ErrGeneratingToken = errors.New("error generating token")
+	ErrValidatingToken = errors.New("error validation token")
+)
 
-	claims := token.Claims.(jwt.MapClaims)
-	claims["sub"] = user.UUID
-	claims["email"] = user.Email
-	claims["exp"] = time.Now().Add(duration).Unix()
+func GenerateToken(
+	id string,
+	email string,
+	duration time.Duration,
+	secret string,
+) (string, error) {
+	claims := Claims{
+		Email: email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   id,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+		},
+	}
 
-	tokenString, err := token.SignedString([]byte(secret))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	accessToken, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrGeneratingToken, err)
 	}
 
-	return tokenString, nil
+	return accessToken, nil
+}
+
+func ValidateToken(tokenString string, secret string) (*Claims, error) {
+	claims := &Claims{}
+
+	keyFunc := func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(secret), nil
+	}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, keyFunc)
+
+	if err != nil || !token.Valid {
+		return nil, ErrValidatingToken
+	}
+
+	return claims, nil
 }

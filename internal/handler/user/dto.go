@@ -6,6 +6,8 @@ type GetUserRequest struct {
 	UUID string `json:"uuid" validate:"required,uuid"`
 }
 
+// TODO: Убрать PasswordHash из ответа
+
 type GetUserResponse struct {
 	Email        string `json:"email"`
 	PasswordHash []byte `json:"password_hash"`

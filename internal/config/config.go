@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Env        string        `yaml:"env" env-required:"true"`
-	TokenTTL   time.Duration `yaml:"token_ttl" env-default:"1h"`
+	Env        string `yaml:"env" env-required:"true"`
 	DB         `yaml:"db" env-required:"true"`
 	HTTPServer `yaml:"http_server" env-required:"true"`
+	JWT        `yaml:"jwt" env-required:"true"`
 }
 
 type DB struct {
@@ -27,6 +27,12 @@ type HTTPServer struct {
 	Address     string        `yaml:"address" env-required:"true"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"5s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+}
+
+type JWT struct {
+	AccessTTL  time.Duration `yaml:"access_ttl" env-default:"15m"`
+	RefreshTTL time.Duration `yaml:"refresh_ttl" env-default:"168h"`
+	Secret     string        `yaml:"secret" env-required:"true"`
 }
 
 func MustLoad() *Config {

@@ -3,6 +3,9 @@ package middleware
 import (
 	"log/slog"
 	"net/http"
+	"providerHub/internal/config"
+	"providerHub/internal/lib/jwt"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,6 +19,34 @@ func CORS(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+func Auth(cfg config.JWT) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+				return
+			}
+
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				http.Error(w, "Authorization header format must be Bearer {token}", http.StatusUnauthorized)
+				return
+			}
+
+			//TODO: Проверка прав доступа
+			_, err := jwt.ValidateToken(parts[1], cfg.Secret)
+			if err != nil {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
 }
 
 func Logger(log *slog.Logger) func(next http.Handler) http.Handler {

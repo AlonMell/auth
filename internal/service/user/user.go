@@ -8,8 +8,8 @@ import (
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler/user"
 	bc "providerHub/internal/lib/bcrypt"
-	"providerHub/internal/service"
 	serr "providerHub/internal/service/errors"
+	serInterface "providerHub/internal/service/interfaces"
 )
 
 type Updater interface {
@@ -26,7 +26,7 @@ type Getter interface {
 
 type Provider struct {
 	log *slog.Logger
-	s   service.UserSaver
+	s   serInterface.UserSaver
 	g   Getter
 	u   Updater
 	d   Deleter
@@ -34,7 +34,7 @@ type Provider struct {
 
 func New(
 	log *slog.Logger,
-	s service.UserSaver,
+	s serInterface.UserSaver,
 	g Getter,
 	u Updater,
 	d Deleter,

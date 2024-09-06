@@ -3,10 +3,12 @@ package login
 import (
 	"log/slog"
 	"net/http"
+	"providerHub/internal/config"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 
+	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler"
 	"providerHub/internal/handler/auth"
 	resp "providerHub/internal/lib/api/response"
@@ -15,12 +17,12 @@ import (
 )
 
 type UserProvider interface {
-	Token(auth.LoginRequest, time.Duration) (token string, err error)
+	Token(auth.LoginRequest, config.JWT) (jwt *dto.JWT, err error)
 }
 
 func New(
 	log *slog.Logger,
-	tokentTTL time.Duration,
+	cfg config.JWT,
 	usrProvider UserProvider,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -46,23 +48,25 @@ func New(
 			return
 		}
 
-		token, err := usrProvider.Token(req, tokentTTL)
+		jwt, err := usrProvider.Token(req, cfg)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
+		res := auth.LoginResponse{Jwt: jwt.Access}
+
 		http.SetCookie(w, &http.Cookie{
-			Name:  "jwt",
-			Value: token,
+			Name:  "refresh",
+			Value: jwt.Refresh,
 			//Path:     "/",
 			HttpOnly: true,
 			Secure:   false,
 			//SameSite: http.SameSiteLaxMode,
-			Expires: time.Now().Add(tokentTTL),
+			Expires: time.Now().Add(cfg.RefreshTTL),
 			//Domain:   "example.com",
 		})
 
-		resp.WriteJSON(w, r, resp.Ok())
+		resp.WriteJSON(w, r, res)
 	}
 }

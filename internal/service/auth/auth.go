@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"log/slog"
-	"providerHub/internal/service"
-	"time"
-
 	"github.com/google/uuid"
+	"log/slog"
+	"providerHub/internal/config"
+	"providerHub/internal/domain/dto"
+	serInterface "providerHub/internal/service/interfaces"
 
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler/auth"
@@ -20,13 +20,13 @@ type UserGetter interface {
 
 type Auth struct {
 	log       *slog.Logger
-	usrSaver  service.UserSaver
+	usrSaver  serInterface.UserSaver
 	usrGetter UserGetter
 }
 
 func New(
 	log *slog.Logger,
-	s service.UserSaver,
+	s serInterface.UserSaver,
 	g UserGetter,
 ) *Auth {
 	return &Auth{
@@ -36,9 +36,7 @@ func New(
 	}
 }
 
-const secret = "secretsecretsecretsecretsecret"
-
-func (a *Auth) Token(r auth.LoginRequest, tokentTTL time.Duration) (string, error) {
+func (a *Auth) Token(r auth.LoginRequest, cfg config.JWT) (*dto.JWT, error) {
 	const op = "service.Auth.Login"
 
 	log := a.log.With(slog.String("op", op))
@@ -46,19 +44,24 @@ func (a *Auth) Token(r auth.LoginRequest, tokentTTL time.Duration) (string, erro
 
 	user, err := a.usrGetter.UserByEmail(r.Email)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return nil, serr.Catch(err, op)
 	}
 
 	if err = bc.ComparePassword(user.PasswordHash, r.Password); err != nil {
-		return "", serr.Catch(err, op)
+		return nil, serr.Catch(err, op)
 	}
 
-	token, err := jwt.NewToken(user, tokentTTL, secret)
+	access, err := jwt.GenerateToken(user.UUID, user.Email, cfg.AccessTTL, cfg.Secret)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return nil, serr.Catch(err, op)
 	}
 
-	return token, nil
+	refresh, err := jwt.GenerateToken(user.UUID, user.Email, cfg.RefreshTTL, cfg.Secret)
+	if err != nil {
+		return nil, serr.Catch(err, op)
+	}
+
+	return &dto.JWT{Access: access, Refresh: refresh}, nil
 }
 
 func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
@@ -84,4 +87,23 @@ func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
 	}
 
 	return id, nil
+}
+
+func (a *Auth) RefreshToken(req auth.RefreshRequest, cfg config.JWT) (accessToken string, err error) {
+	const op = "service.Auth.Refresh"
+
+	log := a.log.With(slog.String("op", op))
+	log.Debug("refresh token")
+
+	claims, err := jwt.ValidateToken(req.RefreshToken, cfg.Secret)
+	if err != nil {
+		return "", serr.Catch(err, op)
+	}
+
+	access, err := jwt.GenerateToken(claims.Subject, claims.Email, cfg.AccessTTL, cfg.Secret)
+	if err != nil {
+		return "", serr.Catch(err, op)
+	}
+
+	return access, nil
 }
