@@ -23,12 +23,7 @@ type Catcher struct {
 }
 
 func NewCatcher(op string, log *slog.Logger, w http.ResponseWriter, r *http.Request) *Catcher {
-	return &Catcher{
-		op:  op,
-		log: log,
-		w:   w,
-		r:   r,
-	}
+	return &Catcher{op, log, w, r}
 }
 
 func (c *Catcher) Catch(err error) {
@@ -49,6 +44,6 @@ func (c *Catcher) Catch(err error) {
 		}
 	}
 
-	resp.WriteJSON(c.w, c.r, fmt.Errorf(InvalidRequest, err))
 	c.w.WriteHeader(http.StatusBadRequest)
+	resp.WriteJSON(c.w, c.r, fmt.Errorf(InvalidRequest, err))
 }

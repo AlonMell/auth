@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -14,6 +15,14 @@ var (
 	ErrUserExists   = errors.New("user already exists")
 )
 
+const (
+	userByIdQuery    = `SELECT id, email, password_hash, is_active FROM users WHERE id=$1`
+	userByEmailQuery = `SELECT id, email, password_hash, is_active FROM users WHERE email=$1`
+	deleteUserQuery  = `DELETE FROM users WHERE id=$1`
+	updateUserQuery  = `UPDATE users SET email=$1, password_hash=$2, is_active=$3 WHERE id=$4`
+	insertUserQuery  = `INSERT INTO users(id, email, password_hash, is_active) VALUES ($1, $2, $3, $4)`
+)
+
 type UserRepo struct {
 	db *sql.DB
 }
@@ -22,53 +31,48 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (s *UserRepo) SaveUser(user model.User) (string, error) {
+func (s *UserRepo) SaveUser(ctx context.Context, user model.User) (string, error) {
 	const op = "storage.postgres.SaveUser"
 
-	_, err := s.UserById(user.UUID)
+	_, err := s.UserById(ctx, user.Id)
 	if err == nil {
 		return "", ErrUserExists
 	} else if !errors.Is(err, ErrUserNotFound) {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	query := `INSERT INTO users(id, email, password_hash, is_active) VALUES ($1, $2, $3, $4)`
-
-	stmt, err := s.db.Prepare(query)
+	stmt, err := s.db.Prepare(insertUserQuery)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(user.UUID, user.Email, user.PasswordHash /*user.Phone,*/, user.IsActive)
+	_, err = stmt.Exec(user.Id, user.Email, user.PasswordHash /*user.Phone,*/, user.IsActive)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	usr, err := s.UserById(user.UUID)
+	usr, err := s.UserById(ctx, user.Id)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return usr.UUID, nil
+	return usr.Id, nil
 }
 
-func (s *UserRepo) UserById(uuid string) (*model.User, error) {
+func (s *UserRepo) UserById(
+	ctx context.Context, id string,
+) (*model.User, error) {
 	const op = "storage.postgres.UserById"
 
-	query := `
-		SELECT id, email, password_hash, is_active 
-		FROM users 
-		WHERE id=$1`
-
-	stmt, err := s.db.Prepare(query)
+	stmt, err := s.db.Prepare(userByIdQuery)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
 	var user model.User
-	err = stmt.QueryRow(uuid).Scan(&user.UUID, &user.Email, &user.PasswordHash, &user.IsActive)
+	err = stmt.QueryRow(id).Scan(&user.Id, &user.Email, &user.PasswordHash, &user.IsActive)
 	if err != nil {
 		return nil, errorHandler(err, op)
 	}
@@ -76,18 +80,18 @@ func (s *UserRepo) UserById(uuid string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *UserRepo) DeleteUser(uuid string) error {
+func (s *UserRepo) DeleteUser(
+	ctx context.Context, id string,
+) error {
 	const op = "storage.postgres.DeleteUser"
 
-	query := `DELETE FROM users WHERE id=$1`
-
-	stmt, err := s.db.Prepare(query)
+	stmt, err := s.db.Prepare(deleteUserQuery)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(uuid)
+	_, err = stmt.Exec(id)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -95,18 +99,18 @@ func (s *UserRepo) DeleteUser(uuid string) error {
 	return nil
 }
 
-func (s *UserRepo) UpdateUser(user model.User) error {
+func (s *UserRepo) UpdateUser(
+	ctx context.Context, user model.User,
+) error {
 	const op = "storage.postgres.UpdateUser"
 
-	query := `UPDATE users SET email=$1, password_hash=$2, is_active=$3 WHERE id=$4`
-
-	stmt, err := s.db.Prepare(query)
+	stmt, err := s.db.Prepare(updateUserQuery)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(user.Email, user.PasswordHash, user.IsActive, user.UUID)
+	_, err = stmt.Exec(user.Email, user.PasswordHash, user.IsActive, user.Id)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -114,22 +118,19 @@ func (s *UserRepo) UpdateUser(user model.User) error {
 	return nil
 }
 
-func (s *UserRepo) UserByEmail(email string) (*model.User, error) {
+func (s *UserRepo) UserByEmail(
+	ctx context.Context, email string,
+) (*model.User, error) {
 	const op = "storage.postgres.User"
 
-	query := `
-		SELECT id, email, password_hash, is_active 
-		FROM users 
-		WHERE email=$1`
-
-	stmt, err := s.db.Prepare(query)
+	stmt, err := s.db.Prepare(userByEmailQuery)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	defer stmt.Close()
 
 	var user model.User
-	err = stmt.QueryRow(email).Scan(&user.UUID, &user.Email, &user.PasswordHash, &user.IsActive)
+	err = stmt.QueryRow(email).Scan(&user.Id, &user.Email, &user.PasswordHash, &user.IsActive)
 	if err != nil {
 		return nil, errorHandler(err, op)
 	}

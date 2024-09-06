@@ -1,0 +1,289 @@
+basePath: /
+definitions:
+  delete.Request:
+    properties:
+      id:
+        type: string
+    required:
+    - id
+    type: object
+  delete.Response:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  get.Request:
+    properties:
+      id:
+        type: string
+    required:
+    - id
+    type: object
+  get.Response:
+    properties:
+      email:
+        type: string
+      is_active:
+        type: boolean
+      password_hash:
+        items:
+          type: integer
+        type: array
+    type: object
+  login.Request:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  login.Response:
+    properties:
+      jwt:
+        type: string
+    type: object
+  post.Request:
+    properties:
+      email:
+        type: string
+      is_active:
+        type: boolean
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  post.Response:
+    properties:
+      id:
+        type: string
+    type: object
+  refresh.Request:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  refresh.Response:
+    properties:
+      access_token:
+        type: string
+    type: object
+  register.Request:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  register.Response:
+    properties:
+      error:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  update.Request:
+    properties:
+      email:
+        type: string
+      is_active:
+        type: boolean
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  update.Response:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server ProviderHub server.
+  title: ProviderHub API
+  version: "1.0"
+paths:
+  /api/v1/user:
+    delete:
+      consumes:
+      - application/json
+      description: Delete User from system
+      parameters:
+      - description: user id
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/delete.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delete.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete User
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Create user at system
+      parameters:
+      - description: user info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/post.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/post.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Post User
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Update all info of a user at system
+      parameters:
+      - description: all user info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/update.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update User
+      tags:
+      - user
+  /api/v1/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get User from system
+      parameters:
+      - description: user id
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/get.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/get.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get User
+      tags:
+      - user
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Sign in to the system
+      parameters:
+      - description: account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/login.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/login.Response'
+      summary: Sign In
+      tags:
+      - auth
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token
+      parameters:
+      - description: user info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/refresh.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/refresh.Response'
+      summary: Refresh
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register new user
+      parameters:
+      - description: user info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/register.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/register.Response'
+      summary: Register
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

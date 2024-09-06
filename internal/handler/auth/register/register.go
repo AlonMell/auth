@@ -1,25 +1,34 @@
 package register
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/domain/dto"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/auth"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type UserRegister interface {
-	RegisterUser(auth.RegisterRequest) (uuid string, err error)
+	RegisterUser(context.Context, dto.RegisterDTO) (id string, err error)
 }
 
+// New
+// @Summary Register
+// @Tags auth
+// @Description Register new user
+// @Accept json
+// @Produce json
+// @Param input body Request true "user info"
+// @Success 200 {object} Response
+// @Router /register [post]
 func New(
-	log *slog.Logger,
-	reg UserRegister,
+	log *slog.Logger, reg UserRegister,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.auth.register.New"
@@ -31,7 +40,7 @@ func New(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req auth.RegisterRequest
+		var req Request
 		err := decoder.DecodeJSON(r.Body, &req)
 		if err != nil {
 			errCatcher.Catch(err)
@@ -45,16 +54,18 @@ func New(
 			return
 		}
 
-		uuid, err := reg.RegisterUser(req)
+		registerDTO := dto.RegisterDTO{
+			Email:    req.Email,
+			Password: req.Password,
+		}
+
+		id, err := reg.RegisterUser(r.Context(), registerDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		resp.WriteJSON(w, r, Ok(uuid))
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{Id: id})
 	}
-}
-
-func Ok(uuid string) auth.RegisterResponse {
-	return auth.RegisterResponse{UUID: uuid}
 }

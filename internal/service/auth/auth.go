@@ -1,62 +1,54 @@
 package auth
 
 import (
-	"github.com/google/uuid"
+	"context"
 	"log/slog"
-	"providerHub/internal/config"
 	"providerHub/internal/domain/dto"
 	serInterface "providerHub/internal/service/interfaces"
 
 	"providerHub/internal/domain/model"
-	"providerHub/internal/handler/auth"
 	bc "providerHub/internal/lib/bcrypt"
 	"providerHub/internal/lib/jwt"
 	serr "providerHub/internal/service/errors"
 )
 
-type UserGetter interface {
-	UserByEmail(email string) (*model.User, error)
+type Interface interface {
+	serInterface.UserSaver
+	serInterface.UserGetter
 }
 
 type Auth struct {
-	log       *slog.Logger
-	usrSaver  serInterface.UserSaver
-	usrGetter UserGetter
+	log         *slog.Logger
+	usrProvider Interface
 }
 
-func New(
-	log *slog.Logger,
-	s serInterface.UserSaver,
-	g UserGetter,
-) *Auth {
-	return &Auth{
-		log:       log,
-		usrSaver:  s,
-		usrGetter: g,
-	}
+func New(log *slog.Logger, p Interface) *Auth {
+	return &Auth{log: log, usrProvider: p}
 }
 
-func (a *Auth) Token(r auth.LoginRequest, cfg config.JWT) (*dto.JWT, error) {
+func (a *Auth) Token(
+	ctx context.Context, tokenDTO dto.TokenDTO,
+) (*dto.JWT, error) {
 	const op = "service.Auth.Login"
 
 	log := a.log.With(slog.String("op", op))
 	log.Debug("login user")
 
-	user, err := a.usrGetter.UserByEmail(r.Email)
+	user, err := a.usrProvider.UserByEmail(ctx, tokenDTO.Email)
 	if err != nil {
 		return nil, serr.Catch(err, op)
 	}
 
-	if err = bc.ComparePassword(user.PasswordHash, r.Password); err != nil {
+	if err = bc.ComparePassword(user.PasswordHash, tokenDTO.Password); err != nil {
 		return nil, serr.Catch(err, op)
 	}
 
-	access, err := jwt.GenerateToken(user.UUID, user.Email, cfg.AccessTTL, cfg.Secret)
+	access, err := jwt.GenerateToken(user.Id, user.Email, tokenDTO.AccessTTL, tokenDTO.Secret)
 	if err != nil {
 		return nil, serr.Catch(err, op)
 	}
 
-	refresh, err := jwt.GenerateToken(user.UUID, user.Email, cfg.RefreshTTL, cfg.Secret)
+	refresh, err := jwt.GenerateToken(user.Id, user.Email, tokenDTO.RefreshTTL, tokenDTO.Secret)
 	if err != nil {
 		return nil, serr.Catch(err, op)
 	}
@@ -64,24 +56,22 @@ func (a *Auth) Token(r auth.LoginRequest, cfg config.JWT) (*dto.JWT, error) {
 	return &dto.JWT{Access: access, Refresh: refresh}, nil
 }
 
-func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
+func (a *Auth) RegisterUser(
+	ctx context.Context, registerDTO dto.RegisterDTO,
+) (string, error) {
 	const op = "service.Auth.Register"
 
 	log := a.log.With(slog.String("op", op))
 	log.Debug("registering user")
 
-	hash, err := bc.GeneratePassword(r.Password)
+	hash, err := bc.GeneratePassword(registerDTO.Password)
 	if err != nil {
 		return "", serr.Catch(err, op)
 	}
 
-	user := model.User{
-		UUID:         uuid.New().String(),
-		Email:        r.Email,
-		PasswordHash: hash,
-	}
+	user := model.NewUser(registerDTO.Email, hash, true)
 
-	id, err := a.usrSaver.SaveUser(user)
+	id, err := a.usrProvider.SaveUser(ctx, *user)
 	if err != nil {
 		return "", serr.Catch(err, op)
 	}
@@ -89,18 +79,20 @@ func (a *Auth) RegisterUser(r auth.RegisterRequest) (string, error) {
 	return id, nil
 }
 
-func (a *Auth) RefreshToken(req auth.RefreshRequest, cfg config.JWT) (accessToken string, err error) {
+func (a *Auth) RefreshToken(
+	ctx context.Context, refreshDTO dto.RefreshDTO,
+) (accessToken string, err error) {
 	const op = "service.Auth.Refresh"
 
 	log := a.log.With(slog.String("op", op))
 	log.Debug("refresh token")
 
-	claims, err := jwt.ValidateToken(req.RefreshToken, cfg.Secret)
+	claims, err := jwt.ValidateToken(refreshDTO.RefreshToken, refreshDTO.Secret)
 	if err != nil {
 		return "", serr.Catch(err, op)
 	}
 
-	access, err := jwt.GenerateToken(claims.Subject, claims.Email, cfg.AccessTTL, cfg.Secret)
+	access, err := jwt.GenerateToken(claims.Subject, claims.Email, refreshDTO.AccessTTL, refreshDTO.Secret)
 	if err != nil {
 		return "", serr.Catch(err, op)
 	}

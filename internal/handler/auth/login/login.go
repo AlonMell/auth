@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"providerHub/internal/config"
@@ -10,20 +11,26 @@ import (
 
 	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/auth"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type UserProvider interface {
-	Token(auth.LoginRequest, config.JWT) (jwt *dto.JWT, err error)
+	Token(context.Context, dto.TokenDTO) (jwt *dto.JWT, err error)
 }
 
+// New
+// @Summary Sign In
+// @Tags auth
+// @Description Sign in to the system
+// @Accept json
+// @Produce json
+// @Param input body Request true "account info"
+// @Success 200 {object} Response
+// @Router /login [post]
 func New(
-	log *slog.Logger,
-	cfg config.JWT,
-	usrProvider UserProvider,
+	log *slog.Logger, cfg config.JWT, usrProvider UserProvider,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.auth.login.New"
@@ -35,7 +42,7 @@ func New(
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req auth.LoginRequest
+		var req Request
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
@@ -48,13 +55,17 @@ func New(
 			return
 		}
 
-		jwt, err := usrProvider.Token(req, cfg)
+		tokenDTO := dto.TokenDTO{
+			Email:    req.Email,
+			Password: req.Password,
+			JWT:      cfg,
+		}
+
+		jwt, err := usrProvider.Token(r.Context(), tokenDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
-
-		res := auth.LoginResponse{Jwt: jwt.Access}
 
 		http.SetCookie(w, &http.Cookie{
 			Name:  "refresh",
@@ -67,6 +78,7 @@ func New(
 			//Domain:   "example.com",
 		})
 
-		resp.WriteJSON(w, r, res)
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{Jwt: jwt.Access})
 	}
 }

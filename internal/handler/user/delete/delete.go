@@ -1,23 +1,36 @@
 package delete
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/domain/dto"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/user"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type Deleter interface {
-	Delete(user.DeleteUserRequest) error
+	Delete(context.Context, dto.UserDeleteDTO) error
 }
 
-func New(log *slog.Logger, d Deleter) func(w http.ResponseWriter, r *http.Request) {
+// New
+// @Summary Delete User
+// @Tags user
+// @Security ApiKeyAuth
+// @Description Delete User from system
+// @Accept json
+// @Produce json
+// @Param input body Request true "user id"
+// @Success 200 {object} Response
+// @Router /api/v1/user [delete]
+func New(
+	log *slog.Logger, d Deleter,
+) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.user.delete.New"
 
@@ -28,7 +41,7 @@ func New(log *slog.Logger, d Deleter) func(w http.ResponseWriter, r *http.Reques
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req user.DeleteUserRequest
+		var req Request
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
@@ -41,17 +54,14 @@ func New(log *slog.Logger, d Deleter) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		if err := d.Delete(req); err != nil {
+		deleteDTO := dto.UserDeleteDTO{Id: req.Id}
+
+		if err := d.Delete(r.Context(), deleteDTO); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		resp.WriteJSON(w, r, Ok())
-	}
-}
-
-func Ok() user.DeleteUserResponse {
-	return user.DeleteUserResponse{
-		Response: resp.Ok(),
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{Response: resp.Ok()})
 	}
 }

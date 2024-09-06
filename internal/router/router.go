@@ -7,13 +7,11 @@ import (
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "github.com/swaggo/http-swagger/example/go-chi/docs"
+	_ "providerHub/docs"
 
 	"providerHub/internal/config"
-	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler/auth/refresh"
 
-	"providerHub/internal/domain/model"
 	"providerHub/internal/handler/user/get"
 	mw "providerHub/internal/router/middleware"
 
@@ -27,41 +25,23 @@ import (
 	"providerHub/internal/handler/user/update"
 )
 
-// Router is an interface that describes a router.
-// It should be implemented by any router that is used in the server.
-// The router should implement the [Convey] and [RegisterRoutes] methods.
-// [Convey] is used to add middleware to the router.
-// [HandleAuth] is used to add authentication to the router.
 type Router interface {
 	http.Handler
 	Convey()
-	HandleAuth(cfg config.JWT)
-	HandleUsers()
-}
-
-// Auth is an interface that describes the authentication service.
-type Auth interface {
-	RegisterUser(auth.RegisterRequest) (userId string, err error)
-	Token(auth.LoginRequest, config.JWT) (jwt *dto.JWT, err error)
-	RefreshToken(auth.RefreshRequest, config.JWT) (accessToken string, err error)
-}
-
-// UserProvider is an interface that describes the user service.
-type UserProvider interface {
-	Get(user.GetUserRequest) (*model.User, error)
-	Create(user.CreateUserRequest) (string, error)
-	Delete(user.DeleteUserRequest) error
-	Update(user.UpdateUserRequest) error
+	HandleAuth(config.JWT)
+	HandleUsers(config.JWT)
 }
 
 type Mux struct {
 	*chi.Mux
-	Auth         Auth
-	UserProvider UserProvider
+	Auth         auth.Interface
+	UserProvider user.Interface
 	logger       *slog.Logger
 }
 
-func New(logger *slog.Logger, auth Auth, provider UserProvider) *Mux {
+func New(
+	logger *slog.Logger, auth auth.Interface, provider user.Interface,
+) *Mux {
 	return &Mux{
 		Mux:          chi.NewRouter(),
 		logger:       logger,
@@ -72,7 +52,7 @@ func New(logger *slog.Logger, auth Auth, provider UserProvider) *Mux {
 
 func (m *Mux) Prepare(cfg config.JWT) {
 	m.Convey()
-	m.HandleUsers()
+	m.HandleUsers(cfg)
 	m.HandleAuth(cfg)
 	m.Swagger()
 }
@@ -87,15 +67,15 @@ func (m *Mux) Convey() {
 
 func (m *Mux) Swagger() {
 	m.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/docs/swagger.json"),
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
 }
 
-func (m *Mux) HandleUsers() {
-	m.Get("/api/v1/users", get.New(m.logger, m.UserProvider))
-	m.Post("/api/v1/users", post.New(m.logger, m.UserProvider))
-	m.Put("/api/v1/users", update.New(m.logger, m.UserProvider))
-	m.Delete("/api/v1/users", del.New(m.logger, m.UserProvider))
+func (m *Mux) HandleUsers(cfg config.JWT) {
+	m.With(mw.Auth(cfg)).Get("/api/v1/users/{id}", get.New(m.logger, m.UserProvider))
+	m.With(mw.Auth(cfg)).Post("/api/v1/users", post.New(m.logger, m.UserProvider))
+	m.With(mw.Auth(cfg)).Put("/api/v1/users", update.New(m.logger, m.UserProvider))
+	m.With(mw.Auth(cfg)).Delete("/api/v1/users", del.New(m.logger, m.UserProvider))
 }
 
 func (m *Mux) HandleAuth(cfg config.JWT) {

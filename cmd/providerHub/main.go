@@ -12,11 +12,22 @@ import (
 )
 
 // TODO: Написать свой генератор случайных чисел (math/rand)
-// TODO: render.JSON
 // TODO: Сделать удобный регистратор зависимостей
 
 // TODO: Сервисы по работе с правами и пользователями
 // TODO: Возможно сервис по работе с компонентами приложения по api keys?
+
+// @title ProviderHub API
+// @version 1.0
+// @description This is a sample server ProviderHub server.
+
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
 func main() {
 	cfg := config.MustLoad()
 

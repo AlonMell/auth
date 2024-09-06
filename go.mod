@@ -10,7 +10,6 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/lib/pq v1.10.9
 	github.com/swaggo/http-swagger v1.3.4
-	github.com/swaggo/http-swagger/example/go-chi v0.0.0-20240815064334-3a7ae3083475
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.27.0
 )

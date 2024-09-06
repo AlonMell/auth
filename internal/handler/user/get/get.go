@@ -1,23 +1,36 @@
 package get
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/domain/dto"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/user"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/pkg/validator"
 )
 
 type Getter interface {
-	Get(user.GetUserRequest) (*model.User, error)
+	Get(context.Context, dto.UserGetDTO) (*model.User, error)
 }
 
-func New(log *slog.Logger, g Getter) func(w http.ResponseWriter, r *http.Request) {
+// New
+// @Summary Get User
+// @Tags user
+// @Security ApiKeyAuth
+// @Description Get User from system
+// @Accept json
+// @Produce json
+// @Param input body Request true "user id"
+// @Success 200 {object} Response
+// @Router /api/v1/user/{id} [get]
+func New(
+	log *slog.Logger, g Getter,
+) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.user.get.New"
 
@@ -28,8 +41,8 @@ func New(log *slog.Logger, g Getter) func(w http.ResponseWriter, r *http.Request
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req user.GetUserRequest
-		req.UUID = r.URL.Query().Get("id")
+		var req Request
+		req.Id = r.URL.Query().Get("id")
 
 		log.Info("request body decoded", slog.Any("request", req))
 
@@ -38,19 +51,14 @@ func New(log *slog.Logger, g Getter) func(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		u, err := g.Get(req)
+		getDTO := dto.UserGetDTO{Id: req.Id}
+		u, err := g.Get(r.Context(), getDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		resp.WriteJSON(
-			w, r,
-			user.GetUserResponse{
-				Email:        u.Email,
-				PasswordHash: u.PasswordHash,
-				IsActive:     u.IsActive,
-			},
-		)
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{u.Email, u.PasswordHash, u.IsActive})
 	}
 }

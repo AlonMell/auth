@@ -18,10 +18,7 @@ type App struct {
 	Server *httpApp.Server
 }
 
-func New(
-	log *slog.Logger,
-	cfg *config.Config,
-) *App {
+func New(log *slog.Logger, cfg *config.Config) *App {
 	db, err := postgres.New(cfg, log)
 	if err != nil {
 		log.Error("error with start db postgres!", sl.Err(err))
@@ -30,8 +27,8 @@ func New(
 
 	userRepo := repo.NewUserRepo(db)
 
-	authService := auth.New(log, userRepo, userRepo)
-	userService := user.New(log, userRepo, userRepo, userRepo, userRepo)
+	authService := auth.New(log, userRepo)
+	userService := user.New(log, userRepo)
 
 	mux := router.New(log, authService, userService)
 	mux.Prepare(cfg.JWT)

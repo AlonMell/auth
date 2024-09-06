@@ -1,23 +1,36 @@
 package post
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/domain/dto"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/user"
 	resp "providerHub/internal/lib/api/response"
 	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type Creater interface {
-	Create(user.CreateUserRequest) (string, error)
+	Create(context.Context, dto.UserCreateDTO) (id string, err error)
 }
 
-func New(log *slog.Logger, c Creater) func(w http.ResponseWriter, r *http.Request) {
+// New
+// @Summary Post User
+// @Tags user
+// @Security ApiKeyAuth
+// @Description Create user at system
+// @Accept json
+// @Produce json
+// @Param input body Request true "user info"
+// @Success 200 {object} Response
+// @Router /api/v1/user [post]
+func New(
+	log *slog.Logger, c Creater,
+) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.user.post.New"
 
@@ -28,7 +41,7 @@ func New(log *slog.Logger, c Creater) func(w http.ResponseWriter, r *http.Reques
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req user.CreateUserRequest
+		var req Request
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
@@ -41,12 +54,19 @@ func New(log *slog.Logger, c Creater) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		uuid, err := c.Create(req)
+		createDTO := dto.UserCreateDTO{
+			Email:    req.Email,
+			Password: req.Password,
+			IsActive: req.IsActive,
+		}
+
+		id, err := c.Create(r.Context(), createDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		resp.WriteJSON(w, r, user.CreateUserResponse{UUID: uuid})
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{Id: id})
 	}
 }

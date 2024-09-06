@@ -1,23 +1,31 @@
 package refresh
 
 import (
+	"context"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
 	"providerHub/internal/config"
+	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler"
-	"providerHub/internal/handler/auth"
 	resp "providerHub/internal/lib/api/response"
 )
 
 type UserRefresher interface {
-	RefreshToken(auth.RefreshRequest, config.JWT) (accessToken string, err error)
+	RefreshToken(context.Context, dto.RefreshDTO) (accessToken string, err error)
 }
 
+// New
+// @Summary Refresh
+// @Tags auth
+// @Description Refresh access token
+// @Accept json
+// @Produce json
+// @Param input body Request true "refresh token"
+// @Success 200 {object} Response
+// @Router /refresh [post]
 func New(
-	log *slog.Logger,
-	refresher UserRefresher,
-	cfg config.JWT,
+	log *slog.Logger, refresher UserRefresher, cfg config.JWT,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.auth.refresh.New"
@@ -35,16 +43,22 @@ func New(
 			return
 		}
 
-		req := auth.RefreshRequest{RefreshToken: cookie.Value}
+		req := Request{RefreshToken: cookie.Value}
 
 		log.Info("request body decoded", slog.Any("request", req))
 
-		accessToken, err := refresher.RefreshToken(req, cfg)
+		refreshDTO := dto.RefreshDTO{
+			RefreshToken: req.RefreshToken,
+			JWT:          cfg,
+		}
+
+		accessToken, err := refresher.RefreshToken(r.Context(), refreshDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		resp.WriteJSON(w, r, auth.RefreshResponse{AccessToken: accessToken})
+		w.WriteHeader(http.StatusOK)
+		resp.WriteJSON(w, r, Response{AccessToken: accessToken})
 	}
 }
