@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"providerHub/internal/domain/dto"
+	resp "providerHub/internal/infra/lib/api/response"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/domain/model"
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
 	"providerHub/pkg/validator"
 )
 
 type Getter interface {
-	Get(context.Context, dto.UserGetDTO) (*model.User, error)
+	Get(context.Context, dto.UserGet) (*model.User, error)
 }
 
 // New
@@ -51,7 +51,7 @@ func New(
 			return
 		}
 
-		getDTO := dto.UserGetDTO{Id: req.Id}
+		getDTO := dto.UserGet{Id: req.Id}
 		u, err := g.Get(r.Context(), getDTO)
 		if err != nil {
 			errCatcher.Catch(err)

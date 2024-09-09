@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	resp "providerHub/internal/infra/lib/api/response"
 
-	resp "providerHub/internal/lib/api/response"
 	serr "providerHub/internal/service/errors"
 	"providerHub/pkg/logger/sl"
 )

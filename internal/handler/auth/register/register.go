@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"providerHub/internal/domain/dto"
+	resp "providerHub/internal/infra/lib/api/response"
+	"providerHub/internal/infra/lib/decoder"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type UserRegister interface {
-	RegisterUser(context.Context, dto.RegisterDTO) (id string, err error)
+	RegisterUser(context.Context, dto.Register) (id string, err error)
 }
 
 // New
@@ -54,7 +54,7 @@ func New(
 			return
 		}
 
-		registerDTO := dto.RegisterDTO{
+		registerDTO := dto.Register{
 			Email:    req.Email,
 			Password: req.Password,
 		}

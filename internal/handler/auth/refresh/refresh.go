@@ -5,14 +5,14 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/config"
 	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
+	"providerHub/internal/infra/config"
+	resp "providerHub/internal/infra/lib/api/response"
 )
 
 type UserRefresher interface {
-	RefreshToken(context.Context, dto.RefreshDTO) (accessToken string, err error)
+	RefreshToken(context.Context, dto.Refresh) (accessToken string, err error)
 }
 
 // New
@@ -47,7 +47,7 @@ func New(
 
 		log.Info("request body decoded", slog.Any("request", req))
 
-		refreshDTO := dto.RefreshDTO{
+		refreshDTO := dto.Refresh{
 			RefreshToken: req.RefreshToken,
 			JWT:          cfg,
 		}

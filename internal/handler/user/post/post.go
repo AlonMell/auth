@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"providerHub/internal/domain/dto"
+	resp "providerHub/internal/infra/lib/api/response"
+	"providerHub/internal/infra/lib/decoder"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type Creater interface {
-	Create(context.Context, dto.UserCreateDTO) (id string, err error)
+	Create(context.Context, dto.UserCreate) (id string, err error)
 }
 
 // New
@@ -54,7 +54,7 @@ func New(
 			return
 		}
 
-		createDTO := dto.UserCreateDTO{
+		createDTO := dto.UserCreate{
 			Email:    req.Email,
 			Password: req.Password,
 			IsActive: req.IsActive,

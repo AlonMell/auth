@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"providerHub/internal/infra/lib/jwt"
+	"providerHub/internal/infra/repo"
 
 	"golang.org/x/crypto/bcrypt"
-
-	"providerHub/internal/lib/jwt"
-	repo "providerHub/internal/repo"
 )
 
 var (

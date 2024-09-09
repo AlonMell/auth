@@ -1,0 +1,15 @@
+env: "dev" #dev, prod
+postgres:
+  host: "localhost"
+  port: 5432
+  user: "alonmell"
+  password: "qwerty"
+  database: "ProviderHub"
+http_server:
+  address: "localhost:8080"
+  timeout: 5s
+  idle_timeout: 60s
+jwt:
+  access_ttl: 15m
+  refresh_ttl: 168h
+  secret: "secretsecretsecretsecretsecret"

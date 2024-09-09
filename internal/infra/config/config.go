@@ -2,20 +2,19 @@ package config
 
 import (
 	"flag"
+	"github.com/ilyakaznacheev/cleanenv"
 	"os"
 	"time"
-
-	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
 	Env        string `yaml:"env" env-required:"true"`
-	DB         `yaml:"db" env-required:"true"`
+	Postgres   `yaml:"postgres" env-required:"true"`
 	HTTPServer `yaml:"http_server" env-required:"true"`
 	JWT        `yaml:"jwt" env-required:"true"`
 }
 
-type DB struct {
+type Postgres struct {
 	Host     string `yaml:"host" env-required:"true"`
 	Port     int    `yaml:"port" env-default:"5432"`
 	User     string `yaml:"user" env-default:"postgres"`

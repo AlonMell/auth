@@ -4,16 +4,16 @@ import (
 	"context"
 	"log/slog"
 	"providerHub/internal/domain/dto"
+	bc "providerHub/internal/infra/lib/bcrypt"
 
 	"providerHub/internal/domain/model"
-	bc "providerHub/internal/lib/bcrypt"
 	serr "providerHub/internal/service/errors"
 	serInterface "providerHub/internal/service/interfaces"
 )
 
 type Interface interface {
 	serInterface.UserSaver
-	serInterface.UserGetter
+	serInterface.UserIdGetter
 	serInterface.UserUpdater
 	serInterface.UserDeleter
 }
@@ -28,7 +28,7 @@ func New(log *slog.Logger, p Interface) *Provider {
 }
 
 func (p *Provider) Get(
-	ctx context.Context, getDTO dto.UserGetDTO,
+	ctx context.Context, getDTO dto.UserGet,
 ) (u *model.User, err error) {
 	const op = "user.Get"
 
@@ -44,7 +44,7 @@ func (p *Provider) Get(
 }
 
 func (p *Provider) Create(
-	ctx context.Context, createDTO dto.UserCreateDTO,
+	ctx context.Context, createDTO dto.UserCreate,
 ) (string, error) {
 	const op = "user.Create"
 
@@ -67,7 +67,7 @@ func (p *Provider) Create(
 }
 
 func (p *Provider) Delete(
-	ctx context.Context, deleteDTO dto.UserDeleteDTO,
+	ctx context.Context, deleteDTO dto.UserDelete,
 ) error {
 	const op = "user.Delete"
 
@@ -83,7 +83,7 @@ func (p *Provider) Delete(
 }
 
 func (p *Provider) Update(
-	ctx context.Context, updateDTO dto.UserUpdateDTO,
+	ctx context.Context, updateDTO dto.UserUpdate,
 ) error {
 	const op = "user.Update"
 

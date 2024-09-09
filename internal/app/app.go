@@ -1,17 +1,21 @@
 package app
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"log/slog"
 	"os"
-	"providerHub/internal/repo"
-
 	httpApp "providerHub/internal/app/http"
 	"providerHub/internal/app/postgres"
-	"providerHub/internal/config"
+	"providerHub/internal/infra/config"
+	"providerHub/internal/infra/repo"
 	"providerHub/internal/router"
 	"providerHub/internal/service/auth"
 	"providerHub/internal/service/user"
 	"providerHub/pkg/logger/sl"
+)
+
+var (
+	postgresPlaceholder = sq.Dollar
 )
 
 type App struct {
@@ -25,7 +29,7 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 		os.Exit(1)
 	}
 
-	userRepo := repo.NewUserRepo(db)
+	userRepo := repo.NewUserRepo(db, postgresPlaceholder)
 
 	authService := auth.New(log, userRepo)
 	userService := user.New(log, userRepo)

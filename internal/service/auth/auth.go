@@ -4,17 +4,18 @@ import (
 	"context"
 	"log/slog"
 	"providerHub/internal/domain/dto"
+	bc "providerHub/internal/infra/lib/bcrypt"
+	"providerHub/internal/infra/lib/jwt"
 	serInterface "providerHub/internal/service/interfaces"
 
 	"providerHub/internal/domain/model"
-	bc "providerHub/internal/lib/bcrypt"
-	"providerHub/internal/lib/jwt"
 	serr "providerHub/internal/service/errors"
 )
 
+//go:generate mockery --name Interface
 type Interface interface {
 	serInterface.UserSaver
-	serInterface.UserGetter
+	serInterface.UserEmailGetter
 }
 
 type Auth struct {
@@ -27,7 +28,7 @@ func New(log *slog.Logger, p Interface) *Auth {
 }
 
 func (a *Auth) Token(
-	ctx context.Context, tokenDTO dto.TokenDTO,
+	ctx context.Context, tokenDTO dto.Token,
 ) (*dto.JWT, error) {
 	const op = "service.Auth.Login"
 
@@ -39,6 +40,7 @@ func (a *Auth) Token(
 		return nil, serr.Catch(err, op)
 	}
 
+	//TODO: По ощущениям можно вызывать это всё в горутинах
 	if err = bc.ComparePassword(user.PasswordHash, tokenDTO.Password); err != nil {
 		return nil, serr.Catch(err, op)
 	}
@@ -57,7 +59,7 @@ func (a *Auth) Token(
 }
 
 func (a *Auth) RegisterUser(
-	ctx context.Context, registerDTO dto.RegisterDTO,
+	ctx context.Context, registerDTO dto.Register,
 ) (string, error) {
 	const op = "service.Auth.Register"
 
@@ -80,7 +82,7 @@ func (a *Auth) RegisterUser(
 }
 
 func (a *Auth) RefreshToken(
-	ctx context.Context, refreshDTO dto.RefreshDTO,
+	_ context.Context, refreshDTO dto.Refresh,
 ) (accessToken string, err error) {
 	const op = "service.Auth.Refresh"
 

@@ -17,7 +17,10 @@ type UserDeleter interface {
 	DeleteUser(ctx context.Context, email string) error
 }
 
-type UserGetter interface {
+type UserIdGetter interface {
 	UserById(context.Context, string) (*model.User, error)
+}
+
+type UserEmailGetter interface {
 	UserByEmail(context.Context, string) (*model.User, error)
 }

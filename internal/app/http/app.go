@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/infra/config"
 	"time"
 
-	"providerHub/internal/config"
 	"providerHub/internal/router"
 	"providerHub/pkg/logger/sl"
 )

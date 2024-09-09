@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"providerHub/internal/domain/dto"
+	resp "providerHub/internal/infra/lib/api/response"
+	"providerHub/internal/infra/lib/decoder"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type Deleter interface {
-	Delete(context.Context, dto.UserDeleteDTO) error
+	Delete(context.Context, dto.UserDelete) error
 }
 
 // New
@@ -54,7 +54,7 @@ func New(
 			return
 		}
 
-		deleteDTO := dto.UserDeleteDTO{Id: req.Id}
+		deleteDTO := dto.UserDelete{Id: req.Id}
 
 		if err := d.Delete(r.Context(), deleteDTO); err != nil {
 			errCatcher.Catch(err)

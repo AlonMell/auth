@@ -3,8 +3,8 @@ package middleware
 import (
 	"log/slog"
 	"net/http"
-	"providerHub/internal/config"
-	"providerHub/internal/lib/jwt"
+	"providerHub/internal/infra/config"
+	"providerHub/internal/infra/lib/jwt"
 	"strings"
 	"time"
 

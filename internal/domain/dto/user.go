@@ -1,21 +1,21 @@
 package dto
 
-type UserGetDTO struct {
+type UserGet struct {
 	Id string
 }
 
-type UserCreateDTO struct {
+type UserCreate struct {
 	Email    string
 	Password string
 	IsActive bool
 }
 
-type UserUpdateDTO struct {
+type UserUpdate struct {
 	Email    string
 	Password string
 	IsActive bool
 }
 
-type UserDeleteDTO struct {
+type UserDelete struct {
 	Id string
 }

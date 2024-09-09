@@ -5,11 +5,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
+	"providerHub/internal/infra/config"
 
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "providerHub/docs"
+	_ "providerHub/api"
 
-	"providerHub/internal/config"
 	"providerHub/internal/handler/auth/refresh"
 
 	"providerHub/internal/handler/user/get"
@@ -58,11 +58,11 @@ func (m *Mux) Prepare(cfg config.JWT) {
 }
 
 func (m *Mux) Convey() {
-	m.Use(mw.Logger(m.logger))
-	m.Use(mw.CORS)
 	m.Use(middleware.RequestID)
-	m.Use(middleware.Recoverer)
+	m.Use(mw.CORS)
 	m.Use(middleware.URLFormat)
+	m.Use(mw.Logger(m.logger))
+	m.Use(middleware.Recoverer)
 }
 
 func (m *Mux) Swagger() {

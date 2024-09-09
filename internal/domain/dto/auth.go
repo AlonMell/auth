@@ -1,21 +1,21 @@
 package dto
 
 import (
-	"providerHub/internal/config"
+	"providerHub/internal/infra/config"
 )
 
-type TokenDTO struct {
+type Token struct {
 	Email    string
 	Password string
 	config.JWT
 }
 
-type RefreshDTO struct {
+type Refresh struct {
 	RefreshToken string
 	config.JWT
 }
 
-type RegisterDTO struct {
+type Register struct {
 	Email    string
 	Password string
 }

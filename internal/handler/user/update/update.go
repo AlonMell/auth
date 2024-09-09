@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 	"providerHub/internal/domain/dto"
+	resp "providerHub/internal/infra/lib/api/response"
+	"providerHub/internal/infra/lib/decoder"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type Updater interface {
-	Update(context.Context, dto.UserUpdateDTO) error
+	Update(context.Context, dto.UserUpdate) error
 }
 
 // New
@@ -54,7 +54,7 @@ func New(
 			return
 		}
 
-		updateDTO := dto.UserUpdateDTO{
+		updateDTO := dto.UserUpdate{
 			Email:    req.Email,
 			Password: req.Password,
 			IsActive: req.IsActive,

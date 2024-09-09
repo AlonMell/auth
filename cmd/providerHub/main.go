@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"providerHub/internal/infra/config"
+	"providerHub/internal/infra/lib/logger"
 	"syscall"
 
 	"providerHub/internal/app"
-	"providerHub/internal/config"
-	"providerHub/internal/lib/logger"
 )
 
 // TODO: Написать свой генератор случайных чисел (math/rand)
@@ -29,6 +29,7 @@ import (
 // @name Authorization
 
 func main() {
+
 	cfg := config.MustLoad()
 
 	log := logger.SetupLogger(cfg.Env)

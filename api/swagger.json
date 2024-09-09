@@ -210,7 +210,7 @@
                 "summary": "Refresh",
                 "parameters": [
                     {
-                        "description": "user info",
+                        "description": "refresh token",
                         "name": "input",
                         "in": "body",
                         "required": true,

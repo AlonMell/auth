@@ -4,20 +4,20 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/config"
+	"providerHub/internal/infra/config"
+	resp "providerHub/internal/infra/lib/api/response"
+	"providerHub/internal/infra/lib/decoder"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 
 	"providerHub/internal/domain/dto"
 	"providerHub/internal/handler"
-	resp "providerHub/internal/lib/api/response"
-	"providerHub/internal/lib/decoder"
 	"providerHub/pkg/validator"
 )
 
 type UserProvider interface {
-	Token(context.Context, dto.TokenDTO) (jwt *dto.JWT, err error)
+	Token(context.Context, dto.Token) (jwt *dto.JWT, err error)
 }
 
 // New
@@ -55,7 +55,7 @@ func New(
 			return
 		}
 
-		tokenDTO := dto.TokenDTO{
+		tokenDTO := dto.Token{
 			Email:    req.Email,
 			Password: req.Password,
 			JWT:      cfg,
