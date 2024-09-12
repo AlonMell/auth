@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -17,6 +18,38 @@ import (
 // - password
 // - uuid
 
+type ValidationErrors struct {
+	Errors []error
+}
+
+func (ve ValidationErrors) Error() string {
+	var sb strings.Builder
+	sb.WriteString("validation errors:\n")
+	for _, err := range ve.Errors {
+		sb.WriteString(fmt.Sprintf("- %s\n", err))
+	}
+	return sb.String()
+}
+
+func (ve *ValidationErrors) Add(err error) {
+	ve.Errors = append(ve.Errors, err)
+}
+
+func (ve ValidationErrors) HasErrors() bool {
+	return len(ve.Errors) > 0
+}
+
+func (ve ValidationErrors) UnWrap() []error {
+	return ve.Errors
+}
+
+var (
+	ErrNotValidValue    = errors.New("field with value is not valid")
+	ErrNotValidPassword = errors.New("password is not valid")
+	ErrUnknownTag       = errors.New("unknown tag value")
+	ErrRequiredField    = errors.New("field required")
+)
+
 var regexMap = map[string]*regexp.Regexp{
 	"alpha":    regexp.MustCompile(`^[a-zA-Z]+$`),
 	"alphanum": regexp.MustCompile(`^[a-zA-Z0-9]+$`),
@@ -25,7 +58,6 @@ var regexMap = map[string]*regexp.Regexp{
 	"uuid":     regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$`),
 }
 
-// Field represents a field in a struct.
 type Field struct {
 	Name  string
 	Value reflect.Value
@@ -64,13 +96,13 @@ func Struct(s any) error {
 		close(errChan)
 	}()
 
-	var errors []error
+	var errs ValidationErrors
 	for err := range errChan {
-		errors = append(errors, err)
+		errs.Add(err)
 	}
 
-	if len(errors) > 0 {
-		return fmt.Errorf("validation errors: %v", errors)
+	if errs.HasErrors() {
+		return errs
 	}
 
 	return nil
@@ -80,7 +112,9 @@ func (f *Field) validate() error {
 	for _, tag := range f.Tags {
 		if tag == "" {
 			continue
-		} else if err := f.validateTag(tag); err != nil {
+		}
+
+		if err := f.validateTag(tag); err != nil {
 			return err
 		}
 	}
@@ -96,10 +130,7 @@ func (f *Field) validateTag(tag string) error {
 
 func (f *Field) validatePattern(tag string, pattern *regexp.Regexp) error {
 	if str := f.Value.String(); !pattern.MatchString(str) {
-		return fmt.Errorf(
-			"field %s with value %s is not %s",
-			f.Name, str, tag,
-		)
+		return formatError(f.Name, ErrNotValidValue)
 	}
 	return nil
 }
@@ -111,13 +142,13 @@ func (f *Field) switcher(tag string) error {
 	case "password":
 		return f.validatePassword()
 	default:
-		return fmt.Errorf("unknown tag value: %s", tag)
+		return formatError(f.Name, ErrUnknownTag)
 	}
 }
 
 func (f *Field) validateRequired() error {
 	if f.Value.IsZero() {
-		return fmt.Errorf("field %s is required", f.Name)
+		return formatError(f.Name, ErrRequiredField)
 	}
 	return nil
 }
@@ -130,8 +161,12 @@ func (f *Field) validatePassword() error {
 	hasDigit := regexp.MustCompile(`\d`).MatchString(s)
 
 	if !(pass && hasUpper && hasLower && hasDigit) {
-		return fmt.Errorf("field %s is not a valid password", f.Name)
+		return formatError(f.Name, ErrNotValidPassword)
 	}
 
 	return nil
+}
+
+func formatError(name string, err error) error {
+	return fmt.Errorf("%s: %w", name, err)
 }

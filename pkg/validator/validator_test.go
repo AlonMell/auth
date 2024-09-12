@@ -1,117 +1,117 @@
 package validator
 
 import (
+	"errors"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-type CreateUserRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,password"`
-	IsActive bool   `json:"is_active"`
-}
-
-// Определение структуры для тестов
 type TestStruct struct {
-	Username string `validate:"required,alpha"`
-	Email    string `validate:"required,email"`
-	Phone    string `validate:"phone"`
-	Password string `validate:"required,password"`
-	UUID     string `validate:"uuid"`
-}
-
-func TestStruct2Validation(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   CreateUserRequest
-		wantErr bool
-	}{
-		{
-			name: "valid input",
-			input: CreateUserRequest{
-				Email:    "test123@email.com",
-				Password: "Password123",
-				IsActive: true,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := Struct(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Struct() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	A1 string `validate:"required,alpha"`
+	A2 string `validate:"required,alphanum"`
+	A3 string `validate:"required,email"`
+	A4 string `validate:"required,phone"`
+	A5 string `validate:"required,password"`
+	A6 string `validate:"required,uuid"`
+	B1 string `validate:"alpha"`
+	B2 string
+	B4 string `json:"b4" validate:"required,password"`
+	B5 string `json:"b5" validate:""`
 }
 
 func TestStructValidation(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   TestStruct
-		wantErr bool
+		name  string
+		input TestStruct
+		err   error
 	}{
 		{
-			name: "missing required field",
+			name: "Valid data",
 			input: TestStruct{
-				Email:    "john.doe@example.com",
-				Phone:    "+1234567890",
-				Password: "Password123",
-				UUID:     "b00e1a65-f342-4496-bddc-acd438174c8d",
+				A1: "ValidName",
+				A2: "Valid123",
+				A3: "test@example.com",
+				A4: "+1234567890",
+				A5: "StrongPass1",
+				A6: uuid.New().String(),
+				B1: "OptionalAlpha",
+				B2: "OptionalField",
+				B4: "AnotherPass1",
+				B5: "Optional",
 			},
-			wantErr: true,
+			err: nil,
 		},
 		{
-			name: "invalid email format",
+			name: "Missing required fields",
 			input: TestStruct{
-				Username: "JohnDoe",
-				Email:    "john.doe@example",
-				Phone:    "+1234567890",
-				Password: "Password123",
-				UUID:     "b00e1a65-f342-4496-bddc-acd438174c8d",
+				A1: "",
+				A2: "",
+				A3: "",
+				A4: "",
+				A5: "",
+				A6: "",
 			},
-			wantErr: true,
+			err: ErrRequiredField,
 		},
 		{
-			name: "invalid phone number",
+			name: "Invalid email format",
 			input: TestStruct{
-				Username: "JohnDoe",
-				Email:    "john.doe@example.com",
-				Phone:    "123-456-7890",
-				Password: "Password123",
-				UUID:     "b00e1a65-f342-4496-bddc-acd438174c8d",
+				A1: "ValidName",
+				A2: "Valid123",
+				A3: "invalid-email",
+				A4: "+1234567890",
+				A5: "StrongPass1",
+				A6: uuid.New().String(),
 			},
-			wantErr: true,
+			err: ErrNotValidValue,
 		},
 		{
-			name: "invalid password",
+			name: "Invalid phone format",
 			input: TestStruct{
-				Username: "JohnDoe",
-				Email:    "john.doe@example.com",
-				Phone:    "+1234567890",
-				Password: "pass123",
-				UUID:     "b00e1a65-f342-4496-bddc-acd438174c8d",
+				A1: "ValidName",
+				A2: "Valid123",
+				A3: "test@example.com",
+				A4: "123456", // Invalid phone
+				A5: "StrongPass1",
+				A6: uuid.New().String(),
 			},
-			wantErr: true,
+			err: ErrNotValidValue,
 		},
 		{
-			name: "invalid UUID format",
+			name: "Invalid password (missing digit)",
 			input: TestStruct{
-				Username: "JohnDoe",
-				Email:    "john.doe@example.com",
-				Phone:    "+1234567890",
-				Password: "Password123",
-				UUID:     "invalid-uuid",
+				A1: "ValidName",
+				A2: "Valid123",
+				A3: "test@example.com",
+				A4: "+1234567890",
+				A5: "StrongPass", // Missing digit
+				A6: uuid.New().String(),
 			},
-			wantErr: true,
+			err: ErrNotValidPassword,
+		},
+		{
+			name: "Invalid UUID format",
+			input: TestStruct{
+				A1: "ValidName",
+				A2: "Valid123",
+				A3: "test@example.com",
+				A4: "+1234567890",
+				A5: "StrongPass1",
+				A6: "invalid-uuid",
+			},
+			err: ErrNotValidValue,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Struct(tt.input)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Struct() error = %v, wantErr %v", err, tt.wantErr)
+
+			if assert.Errorf(t, err, tt.err.Error()) {
+				assert.True(t, errors.Is(err, tt.err))
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
