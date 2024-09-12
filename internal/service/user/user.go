@@ -2,16 +2,17 @@ package user
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/domain/dto"
+	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
-	"providerHub/internal/domain/dto"
-	bc "providerHub/internal/infra/lib/bcrypt"
 
-	"providerHub/internal/domain/model"
-	serr "providerHub/internal/service/errors"
-	serInterface "providerHub/internal/service/interfaces"
+	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
+	serInterface "github.com/AlonMell/ProviderHub/internal/service/interfaces"
 )
 
-type Interface interface {
+type UserRepo interface {
 	serInterface.UserSaver
 	serInterface.UserIdGetter
 	serInterface.UserUpdater
@@ -20,36 +21,38 @@ type Interface interface {
 
 type Provider struct {
 	log         *slog.Logger
-	usrProvider Interface
+	usrProvider UserRepo
 }
 
-func New(log *slog.Logger, p Interface) *Provider {
+func New(log *slog.Logger, p UserRepo) *Provider {
 	return &Provider{log: log, usrProvider: p}
 }
 
 func (p *Provider) Get(
 	ctx context.Context, getDTO dto.UserGet,
-) (u *model.User, err error) {
-	const op = "user.Get"
+) (*model.User, error) {
+	const op = "service.user.Get"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := p.log.With(slog.String("op", op))
-	log.Debug("get user from db")
+	p.log.DebugContext(ctx, "get user from db")
 
-	u, err = p.usrProvider.UserById(ctx, getDTO.Id)
+	user, err := p.usrProvider.UserById(ctx, getDTO.Id)
 	if err != nil {
 		return nil, serr.Catch(err, op)
 	}
 
-	return
+	ctx = logger.WithLogUserID(ctx, user.Id)
+
+	return user, err
 }
 
 func (p *Provider) Create(
 	ctx context.Context, createDTO dto.UserCreate,
 ) (string, error) {
-	const op = "user.Create"
+	const op = "service.user.Create"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := p.log.With(slog.String("op", op))
-	log.Debug("creating user")
+	p.log.DebugContext(ctx, "creating user")
 
 	pass, err := bc.GeneratePassword(createDTO.Password)
 	if err != nil {
@@ -57,6 +60,8 @@ func (p *Provider) Create(
 	}
 
 	u := model.NewUser(createDTO.Email, pass, createDTO.IsActive)
+
+	ctx = logger.WithLogUserID(ctx, u.Id)
 
 	id, err := p.usrProvider.SaveUser(ctx, *u)
 	if err != nil {
@@ -69,10 +74,10 @@ func (p *Provider) Create(
 func (p *Provider) Delete(
 	ctx context.Context, deleteDTO dto.UserDelete,
 ) error {
-	const op = "user.Delete"
+	const op = "service.user.Delete"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := p.log.With(slog.String("op", op))
-	log.Debug("delete user from db")
+	p.log.DebugContext(ctx, "delete user from db")
 
 	err := p.usrProvider.DeleteUser(ctx, deleteDTO.Id)
 	if err != nil {
@@ -85,10 +90,10 @@ func (p *Provider) Delete(
 func (p *Provider) Update(
 	ctx context.Context, updateDTO dto.UserUpdate,
 ) error {
-	const op = "user.Update"
+	const op = "service.user.Update"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := p.log.With(slog.String("op", op))
-	log.Debug("update user in db")
+	p.log.DebugContext(ctx, "update user in db")
 
 	pass, err := bc.GeneratePassword(updateDTO.Password)
 	if err != nil {
@@ -96,6 +101,8 @@ func (p *Provider) Update(
 	}
 
 	u := model.NewUser(updateDTO.Email, pass, updateDTO.IsActive)
+
+	ctx = logger.WithLogUserID(ctx, u.Id)
 
 	err = p.usrProvider.UpdateUser(ctx, *u)
 	if err != nil {

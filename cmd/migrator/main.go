@@ -6,7 +6,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 
-	"providerHub/pkg/migrator"
+	"github.com/AlonMell/migrator"
 )
 
 type DBConfig struct {
@@ -39,7 +39,7 @@ func main() {
 		Host:     "localhost",
 		Port:     5432,
 		User:     "alonmell",
-		Password: "zasode",
+		Password: "qwerty",
 		Database: "ProviderHub",
 	}
 	db := MustConnect(cfg)

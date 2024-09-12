@@ -1,14 +1,14 @@
-package handler
+package errors
 
 import (
 	"errors"
 	"fmt"
+	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"log/slog"
 	"net/http"
-	resp "providerHub/internal/infra/lib/api/response"
 
-	serr "providerHub/internal/service/errors"
-	"providerHub/pkg/logger/sl"
+	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
+	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
 )
 
 const (
@@ -32,6 +32,7 @@ func (c *Catcher) Catch(err error) {
 	if errors.As(err, &errKind) {
 		switch errKind.Kind {
 		case serr.UserKind:
+			//Не очень выводить ошибку пользователю которая содержить stack trace
 			resp.WriteJSON(c.w, c.r, err)
 			c.w.WriteHeader(errKind.Code)
 			return

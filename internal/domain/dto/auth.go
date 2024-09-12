@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"providerHub/internal/infra/config"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
 )
 
 type Token struct {

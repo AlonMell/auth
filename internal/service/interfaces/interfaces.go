@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"context"
-	"providerHub/internal/domain/model"
+	"github.com/AlonMell/ProviderHub/internal/domain/model"
 )
 
 type UserSaver interface {

@@ -2,28 +2,27 @@ package auth
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/domain/dto"
+	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
+	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
+	serInterface "github.com/AlonMell/ProviderHub/internal/service/interfaces"
 	"log/slog"
-	"providerHub/internal/domain/dto"
-	bc "providerHub/internal/infra/lib/bcrypt"
-	"providerHub/internal/infra/lib/jwt"
-	serInterface "providerHub/internal/service/interfaces"
-
-	"providerHub/internal/domain/model"
-	serr "providerHub/internal/service/errors"
 )
 
-//go:generate mockery --name Interface
-type Interface interface {
+type UserRepo interface {
 	serInterface.UserSaver
 	serInterface.UserEmailGetter
 }
 
 type Auth struct {
 	log         *slog.Logger
-	usrProvider Interface
+	usrProvider UserRepo
 }
 
-func New(log *slog.Logger, p Interface) *Auth {
+func New(log *slog.Logger, p UserRepo) *Auth {
 	return &Auth{log: log, usrProvider: p}
 }
 
@@ -31,9 +30,9 @@ func (a *Auth) Token(
 	ctx context.Context, tokenDTO dto.Token,
 ) (*dto.JWT, error) {
 	const op = "service.Auth.Login"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := a.log.With(slog.String("op", op))
-	log.Debug("login user")
+	a.log.DebugContext(ctx, "login user")
 
 	user, err := a.usrProvider.UserByEmail(ctx, tokenDTO.Email)
 	if err != nil {
@@ -62,9 +61,9 @@ func (a *Auth) RegisterUser(
 	ctx context.Context, registerDTO dto.Register,
 ) (string, error) {
 	const op = "service.Auth.Register"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := a.log.With(slog.String("op", op))
-	log.Debug("registering user")
+	a.log.DebugContext(ctx, "registering user")
 
 	hash, err := bc.GeneratePassword(registerDTO.Password)
 	if err != nil {
@@ -72,6 +71,7 @@ func (a *Auth) RegisterUser(
 	}
 
 	user := model.NewUser(registerDTO.Email, hash, true)
+	ctx = logger.WithLogUserID(ctx, user.Id)
 
 	id, err := a.usrProvider.SaveUser(ctx, *user)
 	if err != nil {
@@ -82,12 +82,12 @@ func (a *Auth) RegisterUser(
 }
 
 func (a *Auth) RefreshToken(
-	_ context.Context, refreshDTO dto.Refresh,
+	ctx context.Context, refreshDTO dto.Refresh,
 ) (accessToken string, err error) {
 	const op = "service.Auth.Refresh"
+	ctx = logger.WithLogOp(ctx, op)
 
-	log := a.log.With(slog.String("op", op))
-	log.Debug("refresh token")
+	a.log.DebugContext(ctx, "refresh token")
 
 	claims, err := jwt.ValidateToken(refreshDTO.RefreshToken, refreshDTO.Secret)
 	if err != nil {

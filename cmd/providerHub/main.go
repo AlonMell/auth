@@ -1,14 +1,14 @@
 package main
 
 import (
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"os"
 	"os/signal"
-	"providerHub/internal/infra/config"
-	"providerHub/internal/infra/lib/logger"
 	"syscall"
 
-	"providerHub/internal/app"
+	"github.com/AlonMell/ProviderHub/internal/app"
 )
 
 // TODO: Написать свой генератор случайных чисел (math/rand)

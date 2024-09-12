@@ -3,9 +3,9 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
+	"github.com/AlonMell/ProviderHub/internal/infra/repo"
 	"net/http"
-	"providerHub/internal/infra/lib/jwt"
-	"providerHub/internal/infra/repo"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,6 +41,8 @@ func (c *CustomError) Unwrap() error {
 	return c.Err
 }
 
+//Код не должен быть как обязательный параметр, придумать как это можно обойти??
+
 func New(err error, kind int, code int) *CustomError {
 	return &CustomError{
 		Err:  err,
@@ -48,6 +50,8 @@ func New(err error, kind int, code int) *CustomError {
 		Code: code,
 	}
 }
+
+//Refactor this
 
 func Catch(err error, op string) error {
 	switch {

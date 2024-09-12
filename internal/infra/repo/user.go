@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
-	"providerHub/internal/domain/model"
+	"github.com/AlonMell/ProviderHub/internal/domain/model"
 )
 
 var (
@@ -32,7 +33,8 @@ func NewUserRepo(db *sqlx.DB, placeHolder sq.PlaceholderFormat) *UserRepo {
 func (r *UserRepo) SaveUser(
 	ctx context.Context, user model.User,
 ) (string, error) {
-	const op = "storage.postgres.SaveUser"
+	const op = "repo.user.SaveUser"
+	ctx = logger.WithLogOp(ctx, op)
 
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -57,7 +59,8 @@ func (r *UserRepo) SaveUser(
 func (r *UserRepo) saveUser(
 	tx *sqlx.Tx, ctx context.Context, user model.User,
 ) (string, error) {
-	const op = "storage.postgres.saveUser"
+	const op = "repo.user.saveUser"
+	ctx = logger.WithLogOp(ctx, op)
 
 	builder := r.builder.
 		Insert("users").
@@ -90,7 +93,8 @@ func (r *UserRepo) saveUser(
 func (r *UserRepo) UserById(
 	ctx context.Context, id string,
 ) (*model.User, error) {
-	const op = "storage.postgres.UserById"
+	const op = "repo.user.UserById"
+	ctx = logger.WithLogOp(ctx, op)
 
 	builder := r.builder.
 		Select("id", "email", "password_hash", "is_active").
@@ -114,7 +118,8 @@ func (r *UserRepo) UserById(
 func (r *UserRepo) DeleteUser(
 	ctx context.Context, id string,
 ) error {
-	const op = "storage.postgres.DeleteUser"
+	const op = "repo.user.DeleteUser"
+	ctx = logger.WithLogOp(ctx, op)
 
 	builder := r.builder.
 		Delete("users").
@@ -136,7 +141,8 @@ func (r *UserRepo) DeleteUser(
 func (r *UserRepo) UpdateUser(
 	ctx context.Context, user model.User,
 ) error {
-	const op = "storage.postgres.UpdateUser"
+	const op = "repo.user.UpdateUser"
+	ctx = logger.WithLogOp(ctx, op)
 
 	builder := r.builder.
 		Update("users").
@@ -161,7 +167,8 @@ func (r *UserRepo) UpdateUser(
 func (r *UserRepo) UserByEmail(
 	ctx context.Context, email string,
 ) (*model.User, error) {
-	const op = "storage.postgres.User"
+	const op = "repo.user.UserByEmail"
+	ctx = logger.WithLogOp(ctx, op)
 
 	builder := r.builder.
 		Select("id", "email", "password_hash", "is_active").
@@ -178,6 +185,8 @@ func (r *UserRepo) UserByEmail(
 	if err != nil {
 		return nil, errorHandler(op, err)
 	}
+
+	ctx = logger.WithLogUserID(ctx, user.Id)
 
 	return &user, nil
 }

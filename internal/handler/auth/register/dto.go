@@ -1,7 +1,7 @@
 package register
 
 import (
-	resp "providerHub/internal/infra/lib/api/response"
+	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 )
 
 type Request struct {

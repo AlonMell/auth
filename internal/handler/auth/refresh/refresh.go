@@ -2,13 +2,14 @@ package refresh
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/domain/dto"
+	"github.com/AlonMell/ProviderHub/internal/handler/errors"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/domain/dto"
-	"providerHub/internal/handler"
-	"providerHub/internal/infra/config"
-	resp "providerHub/internal/infra/lib/api/response"
 )
 
 type UserRefresher interface {
@@ -29,13 +30,10 @@ func New(
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.auth.refresh.New"
+		ctx := logger.WithLogOp(r.Context(), op)
+		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := handler.NewCatcher(op, log, w, r)
-
-		log = log.With(
-			slog.String("op", op),
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
+		errCatcher := errors.NewCatcher(op, log, w, r)
 
 		cookie, err := r.Cookie("refresh")
 		if err != nil {
@@ -52,7 +50,7 @@ func New(
 			JWT:          cfg,
 		}
 
-		accessToken, err := refresher.RefreshToken(r.Context(), refreshDTO)
+		accessToken, err := refresher.RefreshToken(ctx, refreshDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return

@@ -1,17 +1,17 @@
 package app
 
 import (
+	httpApp "github.com/AlonMell/ProviderHub/internal/app/http"
+	"github.com/AlonMell/ProviderHub/internal/app/postgres"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	"github.com/AlonMell/ProviderHub/internal/infra/repo"
+	"github.com/AlonMell/ProviderHub/internal/router"
+	"github.com/AlonMell/ProviderHub/internal/service/auth"
+	"github.com/AlonMell/ProviderHub/internal/service/user"
+	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
 	sq "github.com/Masterminds/squirrel"
 	"log/slog"
 	"os"
-	httpApp "providerHub/internal/app/http"
-	"providerHub/internal/app/postgres"
-	"providerHub/internal/infra/config"
-	"providerHub/internal/infra/repo"
-	"providerHub/internal/router"
-	"providerHub/internal/service/auth"
-	"providerHub/internal/service/user"
-	"providerHub/pkg/logger/sl"
 )
 
 var (

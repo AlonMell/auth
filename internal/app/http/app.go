@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/infra/config"
 	"time"
 
-	"providerHub/internal/router"
-	"providerHub/pkg/logger/sl"
+	"github.com/AlonMell/ProviderHub/internal/router"
+	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
 )
 
 type Server struct {

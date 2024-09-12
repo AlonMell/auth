@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"providerHub/internal/handler/auth/login"
-	"providerHub/internal/handler/auth/refresh"
-	"providerHub/internal/handler/auth/register"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/login"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/refresh"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/register"
 )
 
-type Interface interface {
+type Auth interface {
 	login.UserProvider
 	refresh.UserRefresher
 	register.UserRegister

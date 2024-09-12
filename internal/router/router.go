@@ -1,28 +1,28 @@
 package router
 
 import (
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/infra/config"
 
+	_ "github.com/AlonMell/ProviderHub/api"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "providerHub/api"
 
-	"providerHub/internal/handler/auth/refresh"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/refresh"
 
-	"providerHub/internal/handler/user/get"
-	mw "providerHub/internal/router/middleware"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/get"
+	mw "github.com/AlonMell/ProviderHub/internal/router/middleware"
 
-	"providerHub/internal/handler/auth"
-	"providerHub/internal/handler/auth/login"
-	"providerHub/internal/handler/auth/register"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/login"
+	"github.com/AlonMell/ProviderHub/internal/handler/auth/register"
 
-	"providerHub/internal/handler/user"
-	del "providerHub/internal/handler/user/delete"
-	"providerHub/internal/handler/user/post"
-	"providerHub/internal/handler/user/update"
+	"github.com/AlonMell/ProviderHub/internal/handler/user"
+	del "github.com/AlonMell/ProviderHub/internal/handler/user/delete"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/post"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/update"
 )
 
 type Router interface {
@@ -34,13 +34,13 @@ type Router interface {
 
 type Mux struct {
 	*chi.Mux
-	Auth         auth.Interface
-	UserProvider user.Interface
+	Auth         auth.Auth
+	UserProvider user.Provider
 	logger       *slog.Logger
 }
 
 func New(
-	logger *slog.Logger, auth auth.Interface, provider user.Interface,
+	logger *slog.Logger, auth auth.Auth, provider user.Provider,
 ) *Mux {
 	return &Mux{
 		Mux:          chi.NewRouter(),

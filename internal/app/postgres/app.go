@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"fmt"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
 	"github.com/jmoiron/sqlx"
 	"log/slog"
-	"providerHub/internal/infra/config"
 )
 
 // TODO: Добавить Пул потоков

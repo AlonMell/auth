@@ -1,13 +1,13 @@
 package user
 
 import (
-	del "providerHub/internal/handler/user/delete"
-	"providerHub/internal/handler/user/get"
-	"providerHub/internal/handler/user/post"
-	"providerHub/internal/handler/user/update"
+	del "github.com/AlonMell/ProviderHub/internal/handler/user/delete"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/get"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/post"
+	"github.com/AlonMell/ProviderHub/internal/handler/user/update"
 )
 
-type Interface interface {
+type Provider interface {
 	del.Deleter
 	post.Creater
 	get.Getter

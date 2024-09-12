@@ -2,18 +2,19 @@ package login
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/handler/errors"
+	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/infra/config"
-	resp "providerHub/internal/infra/lib/api/response"
-	"providerHub/internal/infra/lib/decoder"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 
-	"providerHub/internal/domain/dto"
-	"providerHub/internal/handler"
-	"providerHub/pkg/validator"
+	"github.com/AlonMell/ProviderHub/internal/domain/dto"
+	"github.com/AlonMell/ProviderHub/pkg/validator"
 )
 
 type UserProvider interface {
@@ -34,13 +35,10 @@ func New(
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handler.auth.login.New"
+		ctx := logger.WithLogOp(r.Context(), op)
+		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := handler.NewCatcher(op, log, w, r)
-
-		log = log.With(
-			slog.String("op", op),
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
+		errCatcher := errors.NewCatcher(op, log, w, r)
 
 		var req Request
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
@@ -61,7 +59,7 @@ func New(
 			JWT:      cfg,
 		}
 
-		jwt, err := usrProvider.Token(r.Context(), tokenDTO)
+		jwt, err := usrProvider.Token(ctx, tokenDTO)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
