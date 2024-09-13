@@ -53,11 +53,14 @@ func (h *AttractiveHandler) Handle(ctx context.Context, r slog.Record) error {
 
 	fields := h.collectFields(r)
 
-	jsonOutput, err := json.MarshalIndent(fields, "", "  ")
-	if err != nil {
-		return err
+	var output string
+	if len(fields) > 0 {
+		jsonOutput, err := json.MarshalIndent(fields, "", "  ")
+		if err != nil {
+			return err
+		}
+		output = string(jsonOutput)
 	}
-	output := string(jsonOutput)
 
 	if !h.opts.UseAttractive {
 		msg := Message{
@@ -124,7 +127,8 @@ func (h *AttractiveHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &AttractiveHandler{
 		handler: h.handler.WithAttrs(attrs),
 		l:       h.l,
-		attrs:   attrs,
+		attrs:   append(h.attrs, attrs...),
+		opts:    h.opts,
 	}
 }
 

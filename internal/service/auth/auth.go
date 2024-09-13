@@ -4,17 +4,18 @@ import (
 	"context"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
 	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
 	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
-	serInterface "github.com/AlonMell/ProviderHub/internal/service/interfaces"
+	ser "github.com/AlonMell/ProviderHub/internal/service"
+	catcher "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"log/slog"
 )
 
 type UserRepo interface {
-	serInterface.UserSaver
-	serInterface.UserEmailGetter
+	ser.UserSaver
+	ser.UserGetter
 }
 
 type Auth struct {
@@ -34,24 +35,26 @@ func (a *Auth) LoginUser(
 
 	a.log.DebugContext(ctx, "login user")
 
-	user, err := a.usrProvider.UserByEmail(ctx, req.Email)
+	user, err := a.usrProvider.User(ctx, vo.UserParams{"email": req.Email})
 	if err != nil {
-		return nil, serr.Catch(ctx, err)
+		return nil, catcher.Catch(ctx, err)
 	}
+
+	ctx = logger.WithLogUserID(ctx, user.Id)
 
 	//TODO: По ощущениям можно вызывать это всё в горутинах
 	if err = bc.ComparePassword(user.PasswordHash, req.Password); err != nil {
-		return nil, serr.Catch(ctx, err)
+		return nil, catcher.Catch(ctx, err)
 	}
 
 	access, err := jwt.GenerateToken(user.Id, user.Email, a.jwt.AccessTTL, a.jwt.Secret)
 	if err != nil {
-		return nil, serr.Catch(ctx, err)
+		return nil, catcher.Catch(ctx, err)
 	}
 
 	refresh, err := jwt.GenerateToken(user.Id, user.Email, a.jwt.RefreshTTL, a.jwt.Secret)
 	if err != nil {
-		return nil, serr.Catch(ctx, err)
+		return nil, catcher.Catch(ctx, err)
 	}
 
 	return &dto.JWT{Access: access, Refresh: refresh}, nil
@@ -66,15 +69,16 @@ func (a *Auth) RegisterUser(
 
 	hash, err := bc.GeneratePassword(req.Password)
 	if err != nil {
-		return "", serr.Catch(ctx, err)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	user := model.NewUser(req.Email, hash, true)
+
 	ctx = logger.WithLogUserID(ctx, user.Id)
 
 	id, err := a.usrProvider.SaveUser(ctx, *user)
 	if err != nil {
-		return "", serr.Catch(ctx, err)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	return id, nil
@@ -89,12 +93,12 @@ func (a *Auth) RefreshToken(
 
 	claims, err := jwt.ValidateToken(req.RefreshToken, a.jwt.Secret)
 	if err != nil {
-		return "", serr.Catch(ctx, err)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	access, err := jwt.GenerateToken(claims.Subject, claims.Email, a.jwt.AccessTTL, a.jwt.Secret)
 	if err != nil {
-		return "", serr.Catch(ctx, err)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	return access, nil

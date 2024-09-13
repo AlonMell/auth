@@ -24,9 +24,9 @@ type ValidationErrors struct {
 
 func (ve ValidationErrors) Error() string {
 	var sb strings.Builder
-	sb.WriteString("validation errors:\n")
+	sb.WriteString("validation errors:")
 	for _, err := range ve.Errors {
-		sb.WriteString(fmt.Sprintf("- %s\n", err))
+		sb.WriteString(fmt.Sprintf(" - %s", err))
 	}
 	return sb.String()
 }
@@ -44,7 +44,7 @@ func (ve ValidationErrors) UnWrap() []error {
 }
 
 var (
-	ErrNotValidValue    = errors.New("field with value is not valid")
+	ErrNotValidValue    = errors.New("field is not valid")
 	ErrNotValidPassword = errors.New("password is not valid")
 	ErrUnknownTag       = errors.New("unknown tag value")
 	ErrRequiredField    = errors.New("field required")

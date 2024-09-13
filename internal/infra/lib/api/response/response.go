@@ -51,5 +51,5 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, v any) {
 		w.WriteHeader(status)
 	}
 
-	_, _ = w.Write(buf.Bytes())
+	w.Write(buf.Bytes())
 }

@@ -5,7 +5,6 @@ postgres:
   password: "qwerty"
   database: "ProviderHub"
 migration:
-  path: "./migrations/postgresql"
   table: "migrations_history"
   major: 0
   minor: 0

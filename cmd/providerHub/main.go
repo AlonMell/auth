@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/config"
+	"github.com/AlonMell/ProviderHub/cmd/providerHub/config"
+	loader "github.com/AlonMell/ProviderHub/internal/infra/lib/config"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"os"
@@ -29,15 +30,15 @@ import (
 // @name Authorization
 
 func main() {
-	var cfg Config
-	config.MustLoad(&cfg)
+	var cfg config.Config
+	loader.MustLoad(&cfg)
 
 	log := logger.SetupLogger(cfg.Env)
 
 	log.Info("starting server", slog.Any("cfg", cfg))
 	log.Debug("debug messages are enabled")
 
-	application := app.New(log, cfg)
+	application := app.New(log, cfg.Postgres, cfg.JWT, cfg.HTTPServer)
 
 	go application.Server.MustRun()
 

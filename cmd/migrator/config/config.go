@@ -1,4 +1,4 @@
-package main
+package config
 
 import "github.com/AlonMell/ProviderHub/internal/app/postgres"
 
@@ -8,7 +8,6 @@ type Config struct {
 }
 
 type Migration struct {
-	Path  string
 	Table string
 	Major int
 	Minor int

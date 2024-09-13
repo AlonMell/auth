@@ -3,6 +3,7 @@ package errors
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"github.com/AlonMell/ProviderHub/internal/infra/repo"
@@ -28,22 +29,22 @@ const (
 	SystemKind
 )
 
-type CustomError struct {
+type ServiceError struct {
 	Err  error
 	Kind int
 	Code int
 }
 
-func (c *CustomError) Error() string {
+func (c *ServiceError) Error() string {
 	return c.Err.Error()
 }
 
-func (c *CustomError) Unwrap() error {
+func (c *ServiceError) Unwrap() error {
 	return c.Err
 }
 
-func New(err error, kind int, code int) *CustomError {
-	return &CustomError{
+func Wrap(err error, kind int, code int) *ServiceError {
+	return &ServiceError{
 		Err:  err,
 		Kind: kind,
 		Code: code,
@@ -57,16 +58,17 @@ func WrapCtx(ctx context.Context, err error) error {
 func Catch(ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, repo.ErrUserNotFound):
-		return WrapCtx(ctx, New(err, UserKind, NotFound))
+		return WrapCtx(ctx, Wrap(err, UserKind, NotFound))
 	case errors.Is(err, repo.ErrUserExists):
-		return WrapCtx(ctx, New(err, UserKind, BadRequest))
+		fmt.Println("Зашел сюда." + err.Error())
+		return WrapCtx(ctx, Wrap(err, UserKind, BadRequest))
 	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
-		return WrapCtx(ctx, New(ErrInvalidPassword, UserKind, BadRequest))
+		return WrapCtx(ctx, Wrap(ErrInvalidPassword, UserKind, BadRequest))
 	case errors.Is(err, jwt.ErrGeneratingToken):
-		return WrapCtx(ctx, New(err, InternalKind, Internal))
+		return WrapCtx(ctx, Wrap(err, InternalKind, Internal))
 	case errors.Is(err, jwt.ErrValidatingToken):
-		return WrapCtx(ctx, New(err, UserKind, Unauthorized))
+		return WrapCtx(ctx, Wrap(err, UserKind, Unauthorized))
 	default:
-		return WrapCtx(ctx, New(err, InternalKind, Internal))
+		return WrapCtx(ctx, Wrap(err, InternalKind, Internal))
 	}
 }

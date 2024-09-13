@@ -1,8 +1,10 @@
-package interfaces
+package service
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/domain/entity"
 	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
 )
 
 type UserSaver interface {
@@ -10,17 +12,13 @@ type UserSaver interface {
 }
 
 type UserUpdater interface {
-	UpdateUser(context.Context, model.User) error
+	UpdateUser(context.Context, entity.UserMap) error
 }
 
 type UserDeleter interface {
 	DeleteUser(ctx context.Context, email string) error
 }
 
-type UserIdGetter interface {
-	UserById(context.Context, string) (*model.User, error)
-}
-
-type UserEmailGetter interface {
-	UserByEmail(context.Context, string) (*model.User, error)
+type UserGetter interface {
+	User(context.Context, vo.UserParams) (*model.User, error)
 }

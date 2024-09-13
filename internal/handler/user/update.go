@@ -60,7 +60,7 @@ func Update(
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		resp.Status(r, http.StatusOK)
 		resp.WriteJSON(w, r, UpdateResp{resp.Ok()})
 	}
 }

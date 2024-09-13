@@ -3,42 +3,43 @@ package user
 import (
 	"context"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
+	"github.com/AlonMell/ProviderHub/internal/domain/entity"
+	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
 	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
+	ser "github.com/AlonMell/ProviderHub/internal/service"
+	catcher "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"log/slog"
 
 	"github.com/AlonMell/ProviderHub/internal/domain/model"
-	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
-	serInterface "github.com/AlonMell/ProviderHub/internal/service/interfaces"
 )
 
-type UserRepo interface {
-	serInterface.UserSaver
-	serInterface.UserIdGetter
-	serInterface.UserUpdater
-	serInterface.UserDeleter
+type Repo interface {
+	ser.UserSaver
+	ser.UserGetter
+	ser.UserUpdater
+	ser.UserDeleter
 }
 
 type Provider struct {
 	log         *slog.Logger
-	usrProvider UserRepo
+	usrProvider Repo
 }
 
-func New(log *slog.Logger, p UserRepo) *Provider {
+func New(log *slog.Logger, p Repo) *Provider {
 	return &Provider{log: log, usrProvider: p}
 }
 
 func (p *Provider) Get(
 	ctx context.Context, req dto.UserGetReq,
 ) (*model.User, error) {
-	const op = "service.user.Get"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.user.Get")
 
 	p.log.DebugContext(ctx, "get user from db")
 
-	user, err := p.usrProvider.UserById(ctx, req.Id)
+	user, err := p.usrProvider.User(ctx, vo.UserParams{"id": req.Id})
 	if err != nil {
-		return nil, serr.Catch(err, op)
+		return nil, catcher.Catch(ctx, err)
 	}
 
 	ctx = logger.WithLogUserID(ctx, user.Id)
@@ -49,14 +50,13 @@ func (p *Provider) Get(
 func (p *Provider) Create(
 	ctx context.Context, req dto.UserCreateReq,
 ) (string, error) {
-	const op = "service.user.Create"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.user.Create")
 
 	p.log.DebugContext(ctx, "creating user")
 
 	pass, err := bc.GeneratePassword(req.Password)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	u := model.NewUser(req.Email, pass, req.IsActive)
@@ -65,7 +65,7 @@ func (p *Provider) Create(
 
 	id, err := p.usrProvider.SaveUser(ctx, *u)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", catcher.Catch(ctx, err)
 	}
 
 	return id, nil
@@ -74,14 +74,13 @@ func (p *Provider) Create(
 func (p *Provider) Delete(
 	ctx context.Context, req dto.UserDeleteReq,
 ) error {
-	const op = "service.user.Delete"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.user.Delete")
 
 	p.log.DebugContext(ctx, "delete user from db")
 
 	err := p.usrProvider.DeleteUser(ctx, req.Id)
 	if err != nil {
-		return serr.Catch(err, op)
+		return catcher.Catch(ctx, err)
 	}
 
 	return nil
@@ -90,23 +89,26 @@ func (p *Provider) Delete(
 func (p *Provider) Update(
 	ctx context.Context, req dto.UserUpdateReq,
 ) error {
-	const op = "service.user.Update"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.user.Update")
 
 	p.log.DebugContext(ctx, "update user in db")
 
 	pass, err := bc.GeneratePassword(req.Password)
 	if err != nil {
-		return serr.Catch(err, op)
+		return catcher.Catch(ctx, err)
 	}
 
-	u := model.NewUser(req.Email, pass, req.IsActive)
+	u := entity.NewUserMap(map[string]any{
+		"email":     req.Email,
+		"password":  pass,
+		"is_active": req.IsActive,
+	})
 
 	ctx = logger.WithLogUserID(ctx, u.Id)
 
 	err = p.usrProvider.UpdateUser(ctx, *u)
 	if err != nil {
-		return serr.Catch(err, op)
+		return catcher.Catch(ctx, err)
 	}
 
 	return nil

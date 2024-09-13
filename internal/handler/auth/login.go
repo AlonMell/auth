@@ -72,7 +72,7 @@ func Login(
 			//Domain:   "example.com",
 		})
 
-		w.WriteHeader(http.StatusOK)
+		resp.Status(r, http.StatusOK)
 		resp.WriteJSON(w, r, LoginResp{Jwt: jwt.Access})
 	}
 }

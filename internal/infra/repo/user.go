@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AlonMell/ProviderHub/internal/domain/entity"
+	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -27,6 +29,30 @@ func NewUserRepo(db *sqlx.DB, placeHolder sq.PlaceholderFormat) *UserRepo {
 		db:      db,
 		builder: sq.StatementBuilder.PlaceholderFormat(placeHolder),
 	}
+}
+
+func (r *UserRepo) User(
+	ctx context.Context, params vo.UserParams,
+) (*model.User, error) {
+	ctx = logger.WithLogOp(ctx, "repo.user.User")
+
+	builder := r.builder.
+		Select("id", "email", "password_hash", "is_active").
+		From("users").
+		Where(sq.Eq(params))
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, catch(ctx, err)
+	}
+
+	var user model.User
+	err = r.db.SelectContext(ctx, &user, query, args...)
+	if err != nil {
+		return nil, catch(ctx, err)
+	}
+
+	return &user, nil
 }
 
 func (r *UserRepo) SaveUser(
@@ -61,6 +87,7 @@ func (r *UserRepo) saveUser(
 
 	builder := r.builder.
 		Insert("users").
+		Columns("id", "email", "is_active", "password_hash").
 		Values(user.Id, user.Email, user.IsActive, user.PasswordHash).
 		Suffix("ON CONFLICT DO NOTHING")
 
@@ -81,34 +108,11 @@ func (r *UserRepo) saveUser(
 		return "", catch(ctx, err)
 	}
 	if affected == 0 {
-		return "", ErrUserExists
+		fmt.Println("Обосрался здесь))")
+		return "", logger.Wrap(ctx, ErrUserExists)
 	}
 
 	return user.Id, nil
-}
-
-func (r *UserRepo) UserById(
-	ctx context.Context, id string,
-) (*model.User, error) {
-	ctx = logger.WithLogOp(ctx, "repo.user.UserById")
-
-	builder := r.builder.
-		Select("id", "email", "password_hash", "is_active").
-		From("users").
-		Where(sq.Eq{"id": id})
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, catch(ctx, err)
-	}
-
-	var user model.User
-	err = r.db.SelectContext(ctx, &user, query, args...)
-	if err != nil {
-		return nil, catch(ctx, err)
-	}
-
-	return &user, nil
 }
 
 func (r *UserRepo) DeleteUser(
@@ -134,15 +138,13 @@ func (r *UserRepo) DeleteUser(
 }
 
 func (r *UserRepo) UpdateUser(
-	ctx context.Context, user model.User,
+	ctx context.Context, user entity.UserMap,
 ) error {
 	ctx = logger.WithLogOp(ctx, "repo.user.UpdateUser")
 
 	builder := r.builder.
 		Update("users").
-		Set("email", user.Email).
-		Set("password_hash", user.PasswordHash).
-		Set("is_active", user.IsActive).
+		SetMap(user.UserParams).
 		Where(sq.Eq{"id": user.Id})
 
 	query, args, err := builder.ToSql()
@@ -156,30 +158,4 @@ func (r *UserRepo) UpdateUser(
 	}
 
 	return nil
-}
-
-func (r *UserRepo) UserByEmail(
-	ctx context.Context, email string,
-) (*model.User, error) {
-	ctx = logger.WithLogOp(ctx, "repo.user.UserByEmail")
-
-	builder := r.builder.
-		Select("id", "email", "password_hash", "is_active").
-		From("users").
-		Where(sq.Eq{"email": email})
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, catch(ctx, err)
-	}
-
-	var user model.User
-	err = r.db.SelectContext(ctx, &user, query, args...)
-	if err != nil {
-		return nil, catch(ctx, err)
-	}
-
-	ctx = logger.WithLogUserID(ctx, user.Id)
-
-	return &user, nil
 }

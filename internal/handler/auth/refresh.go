@@ -53,7 +53,7 @@ func Refresh(
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		resp.Status(r, http.StatusOK)
 		resp.WriteJSON(w, r, RefreshResp{AccessToken: accessToken})
 	}
 }

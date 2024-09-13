@@ -62,7 +62,7 @@ func Register(
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		resp.Status(r, http.StatusOK)
 		resp.WriteJSON(w, r, RegisterResp{Id: id})
 	}
 }

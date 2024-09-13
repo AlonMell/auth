@@ -6,15 +6,15 @@ import (
 	"fmt"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
+	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"log/slog"
 	"net/http"
 
-	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
 )
 
 const (
-	InvalidRequest = "invalid request %w"
+	InvalidRequest = "invalid request: %s"
 )
 
 type Catcher struct {
@@ -34,13 +34,14 @@ func NewCatcher(
 }
 
 func (c *Catcher) Catch(err error) {
-	var errKind *serr.CustomError
+	var errKind *serr.ServiceError
 
 	if errors.As(err, &errKind) {
 		resp.Status(c.r, errKind.Code)
+
 		switch errKind.Kind {
 		case serr.UserKind:
-			resp.WriteJSON(c.w, c.r, err)
+			resp.WriteJSON(c.w, c.r, err.Error())
 			return
 		case serr.InternalKind:
 			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "internal error", sl.Err(err))
@@ -52,5 +53,5 @@ func (c *Catcher) Catch(err error) {
 	}
 
 	resp.Status(c.r, http.StatusBadRequest)
-	resp.WriteJSON(c.w, c.r, fmt.Errorf(InvalidRequest, err))
+	resp.WriteJSON(c.w, c.r, fmt.Sprintf(InvalidRequest, err.Error()))
 }

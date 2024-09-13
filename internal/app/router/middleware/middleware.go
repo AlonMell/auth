@@ -1,10 +1,9 @@
 package middleware
 
 import (
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"log/slog"
 	"net/http"
-	"providerHub/internal/infra/config"
-	"providerHub/internal/infra/lib/jwt"
 	"strings"
 	"time"
 
@@ -21,7 +20,7 @@ func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func Auth(cfg config.JWT) func(next http.Handler) http.Handler {
+func Auth(cfg jwt.Config) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")

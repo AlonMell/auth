@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"github.com/AlonMell/ProviderHub/internal/app/http"
