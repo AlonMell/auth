@@ -1,4 +1,4 @@
-package delete
+package user
 
 import (
 	"context"
@@ -16,10 +16,14 @@ import (
 )
 
 type Deleter interface {
-	Delete(context.Context, dto.UserDelete) error
+	Delete(context.Context, dto.UserDeleteReq) error
 }
 
-// New
+type DeleteResp struct {
+	resp.Response
+}
+
+// Delete
 // @Summary Delete User
 // @Tags user
 // @Security ApiKeyAuth
@@ -29,23 +33,22 @@ type Deleter interface {
 // @Param input body Request true "user id"
 // @Success 200 {object} Response
 // @Router /api/v1/user [delete]
-func New(
+func Delete(
 	log *slog.Logger, d Deleter,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handler.user.delete.New"
-		ctx := logger.WithLogOp(r.Context(), op)
+		ctx := logger.WithLogOp(r.Context(), "handler.user.Delete")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(op, log, w, r)
+		errCatcher := errors.NewCatcher(ctx, log, w, r)
 
-		var req Request
+		var req dto.UserDeleteReq
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		log.Info("request body decoded", slog.Any("request", req))
+		log.InfoContext(ctx, "request body decoded", slog.Any("request", req))
 		ctx = logger.WithLogUserID(ctx, req.Id)
 
 		if err := validator.Struct(req); err != nil {
@@ -53,14 +56,12 @@ func New(
 			return
 		}
 
-		deleteDTO := dto.UserDelete{Id: req.Id}
-
-		if err := d.Delete(ctx, deleteDTO); err != nil {
+		if err := d.Delete(ctx, req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		resp.WriteJSON(w, r, Response{Response: resp.Ok()})
+		resp.WriteJSON(w, r, DeleteResp{Response: resp.Ok()})
 	}
 }

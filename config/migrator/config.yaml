@@ -1,0 +1,11 @@
+postgres:
+  host: "localhost"
+  port: 5432
+  user: "alonmell"
+  password: "qwerty"
+  database: "ProviderHub"
+migration:
+  path: "./migrations/postgresql"
+  table: "migrations_history"
+  major: 0
+  minor: 0

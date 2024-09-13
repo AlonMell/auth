@@ -1,65 +1,67 @@
-package get
+package user
 
 import (
 	"context"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
 	"github.com/AlonMell/ProviderHub/internal/handler/errors"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/AlonMell/ProviderHub/internal/domain/model"
 	"github.com/AlonMell/ProviderHub/pkg/validator"
 )
 
-type Getter interface {
-	Get(context.Context, dto.UserGet) (*model.User, error)
+type Creater interface {
+	Create(context.Context, dto.UserCreateReq) (id string, err error)
 }
 
-// New
-// @Summary Get User
+type PostResp struct {
+	Id string `json:"id"`
+}
+
+// Post
+// @Summary Post User
 // @Tags user
 // @Security ApiKeyAuth
-// @Description Get User from system
+// @Description Create user at system
 // @Accept json
 // @Produce json
-// @Param input body Request true "user id"
+// @Param input body Request true "user info"
 // @Success 200 {object} Response
-// @Router /api/v1/user/{id} [get]
-func New(
-	log *slog.Logger, g Getter,
+// @Router /api/v1/user [post]
+func Post(
+	log *slog.Logger, c Creater,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handler.user.get.New"
-		ctx := logger.WithLogOp(r.Context(), op)
+		ctx := logger.WithLogOp(r.Context(), "handler.user.Post")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(op, log, w, r)
+		errCatcher := errors.NewCatcher(ctx, log, w, r)
 
-		var req Request
-		req.Id = r.URL.Query().Get("id")
+		var req dto.UserCreateReq
+		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
+			errCatcher.Catch(err)
+			return
+		}
 
-		log.Info("request body decoded", slog.Any("request", req))
+		log.InfoContext(ctx, "request body decoded", slog.Any("request", req))
 
 		if err := validator.Struct(req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		getDTO := dto.UserGet{Id: req.Id}
-
-		ctx = logger.WithLogUserID(ctx, getDTO.Id)
-
-		u, err := g.Get(ctx, getDTO)
+		id, err := c.Create(ctx, req)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		resp.WriteJSON(w, r, Response{u.Email, u.PasswordHash, u.IsActive})
+		resp.WriteJSON(w, r, PostResp{Id: id})
 	}
 }

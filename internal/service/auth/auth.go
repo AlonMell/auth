@@ -19,84 +19,82 @@ type UserRepo interface {
 
 type Auth struct {
 	log         *slog.Logger
+	jwt         jwt.Config
 	usrProvider UserRepo
 }
 
-func New(log *slog.Logger, p UserRepo) *Auth {
-	return &Auth{log: log, usrProvider: p}
+func New(log *slog.Logger, p UserRepo, jwt jwt.Config) *Auth {
+	return &Auth{log: log, usrProvider: p, jwt: jwt}
 }
 
-func (a *Auth) Token(
-	ctx context.Context, tokenDTO dto.Token,
+func (a *Auth) LoginUser(
+	ctx context.Context, req dto.LoginReq,
 ) (*dto.JWT, error) {
-	const op = "service.Auth.Login"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.Auth.Login")
 
 	a.log.DebugContext(ctx, "login user")
 
-	user, err := a.usrProvider.UserByEmail(ctx, tokenDTO.Email)
+	user, err := a.usrProvider.UserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, serr.Catch(err, op)
+		return nil, serr.Catch(ctx, err)
 	}
 
 	//TODO: По ощущениям можно вызывать это всё в горутинах
-	if err = bc.ComparePassword(user.PasswordHash, tokenDTO.Password); err != nil {
-		return nil, serr.Catch(err, op)
+	if err = bc.ComparePassword(user.PasswordHash, req.Password); err != nil {
+		return nil, serr.Catch(ctx, err)
 	}
 
-	access, err := jwt.GenerateToken(user.Id, user.Email, tokenDTO.AccessTTL, tokenDTO.Secret)
+	access, err := jwt.GenerateToken(user.Id, user.Email, a.jwt.AccessTTL, a.jwt.Secret)
 	if err != nil {
-		return nil, serr.Catch(err, op)
+		return nil, serr.Catch(ctx, err)
 	}
 
-	refresh, err := jwt.GenerateToken(user.Id, user.Email, tokenDTO.RefreshTTL, tokenDTO.Secret)
+	refresh, err := jwt.GenerateToken(user.Id, user.Email, a.jwt.RefreshTTL, a.jwt.Secret)
 	if err != nil {
-		return nil, serr.Catch(err, op)
+		return nil, serr.Catch(ctx, err)
 	}
 
 	return &dto.JWT{Access: access, Refresh: refresh}, nil
 }
 
 func (a *Auth) RegisterUser(
-	ctx context.Context, registerDTO dto.Register,
+	ctx context.Context, req dto.RegisterReq,
 ) (string, error) {
-	const op = "service.Auth.Register"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.Auth.Register")
 
 	a.log.DebugContext(ctx, "registering user")
 
-	hash, err := bc.GeneratePassword(registerDTO.Password)
+	hash, err := bc.GeneratePassword(req.Password)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", serr.Catch(ctx, err)
 	}
 
-	user := model.NewUser(registerDTO.Email, hash, true)
+	user := model.NewUser(req.Email, hash, true)
 	ctx = logger.WithLogUserID(ctx, user.Id)
 
 	id, err := a.usrProvider.SaveUser(ctx, *user)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", serr.Catch(ctx, err)
 	}
 
 	return id, nil
 }
 
 func (a *Auth) RefreshToken(
-	ctx context.Context, refreshDTO dto.Refresh,
+	ctx context.Context, req dto.RefreshReq,
 ) (accessToken string, err error) {
-	const op = "service.Auth.Refresh"
-	ctx = logger.WithLogOp(ctx, op)
+	ctx = logger.WithLogOp(ctx, "service.Auth.Refresh")
 
 	a.log.DebugContext(ctx, "refresh token")
 
-	claims, err := jwt.ValidateToken(refreshDTO.RefreshToken, refreshDTO.Secret)
+	claims, err := jwt.ValidateToken(req.RefreshToken, a.jwt.Secret)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", serr.Catch(ctx, err)
 	}
 
-	access, err := jwt.GenerateToken(claims.Subject, claims.Email, refreshDTO.AccessTTL, refreshDTO.Secret)
+	access, err := jwt.GenerateToken(claims.Subject, claims.Email, a.jwt.AccessTTL, a.jwt.Secret)
 	if err != nil {
-		return "", serr.Catch(err, op)
+		return "", serr.Catch(ctx, err)
 	}
 
 	return access, nil

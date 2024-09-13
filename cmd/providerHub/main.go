@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	"github.com/AlonMell/ProviderHub/internal/infra/lib/config"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"os"
@@ -29,8 +29,8 @@ import (
 // @name Authorization
 
 func main() {
-
-	cfg := config.MustLoad()
+	var cfg Config
+	config.MustLoad(&cfg)
 
 	log := logger.SetupLogger(cfg.Env)
 

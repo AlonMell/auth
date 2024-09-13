@@ -4,21 +4,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlonMell/ProviderHub/internal/infra/config"
+	"github.com/AlonMell/ProviderHub/internal/app/router"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/AlonMell/ProviderHub/internal/router"
 	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
 )
+
+type Config struct {
+	Address     string        `yaml:"address" env-required:"true"`
+	Timeout     time.Duration `yaml:"timeout" env-default:"5s"`
+	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+}
 
 type Server struct {
 	*http.Server
 	Logger *slog.Logger
 }
 
-func New(log *slog.Logger, cfg config.HTTPServer, r router.Router) *Server {
+func New(log *slog.Logger, cfg Config, r router.Router) *Server {
 	return &Server{
 		Server: &http.Server{
 			Handler:      r,

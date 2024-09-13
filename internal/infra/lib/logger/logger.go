@@ -83,12 +83,16 @@ func (e *errorWithLogCtx) Error() string {
 	return e.err.Error()
 }
 
-func (e *errorWithLogCtx) Wrap(ctx context.Context, err error) error {
+func (e *errorWithLogCtx) Unwrap() error {
+	return e.err
+}
+
+func Wrap(ctx context.Context, err error) error {
 	c, _ := getLogCtx(ctx)
 	return &errorWithLogCtx{err: err, ctx: c}
 }
 
-func (e *errorWithLogCtx) ErrorCtx(ctx context.Context, err error) context.Context {
+func ErrorCtx(ctx context.Context, err error) context.Context {
 	var errCtx *errorWithLogCtx
 	if errors.As(err, &errCtx) {
 		return updateLogCtx(ctx, errCtx.ctx)

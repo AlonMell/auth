@@ -1,21 +1,15 @@
 package dto
 
-import (
-	"github.com/AlonMell/ProviderHub/internal/infra/config"
-)
-
-type Token struct {
-	Email    string
-	Password string
-	config.JWT
+type LoginReq struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,password"`
 }
 
-type Refresh struct {
-	RefreshToken string
-	config.JWT
+type RefreshReq struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
-type Register struct {
-	Email    string
-	Password string
+type RegisterReq struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,password"`
 }

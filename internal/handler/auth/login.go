@@ -1,9 +1,8 @@
-package login
+package auth
 
 import (
 	"context"
 	"github.com/AlonMell/ProviderHub/internal/handler/errors"
-	"github.com/AlonMell/ProviderHub/internal/infra/config"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
@@ -18,10 +17,14 @@ import (
 )
 
 type UserProvider interface {
-	Token(context.Context, dto.Token) (jwt *dto.JWT, err error)
+	LoginUser(context.Context, dto.LoginReq) (jwt *dto.JWT, err error)
 }
 
-// New
+type LoginResp struct {
+	Jwt string `json:"jwt"`
+}
+
+// Login
 // @Summary Sign In
 // @Tags auth
 // @Description Sign in to the system
@@ -30,36 +33,29 @@ type UserProvider interface {
 // @Param input body Request true "account info"
 // @Success 200 {object} Response
 // @Router /login [post]
-func New(
-	log *slog.Logger, cfg config.JWT, usrProvider UserProvider,
+func Login(
+	log *slog.Logger, refreshTTL time.Duration, usrProvider UserProvider,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handler.auth.login.New"
-		ctx := logger.WithLogOp(r.Context(), op)
+		ctx := logger.WithLogOp(r.Context(), "handler.auth.Login")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(op, log, w, r)
+		errCatcher := errors.NewCatcher(ctx, log, w, r)
 
-		var req Request
+		var req dto.LoginReq
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		log.Info("request body decoded", slog.Any("request", req))
+		log.InfoContext(ctx, "request body decoded", slog.Any("request", req))
 
 		if err := validator.Struct(req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
-		tokenDTO := dto.Token{
-			Email:    req.Email,
-			Password: req.Password,
-			JWT:      cfg,
-		}
-
-		jwt, err := usrProvider.Token(ctx, tokenDTO)
+		jwt, err := usrProvider.LoginUser(ctx, req)
 		if err != nil {
 			errCatcher.Catch(err)
 			return
@@ -72,11 +68,11 @@ func New(
 			HttpOnly: true,
 			Secure:   false,
 			//SameSite: http.SameSiteLaxMode,
-			Expires: time.Now().Add(cfg.RefreshTTL),
+			Expires: time.Now().Add(refreshTTL),
 			//Domain:   "example.com",
 		})
 
 		w.WriteHeader(http.StatusOK)
-		resp.WriteJSON(w, r, Response{Jwt: jwt.Access})
+		resp.WriteJSON(w, r, LoginResp{Jwt: jwt.Access})
 	}
 }

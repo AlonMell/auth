@@ -29,14 +29,14 @@ func New(log *slog.Logger, p UserRepo) *Provider {
 }
 
 func (p *Provider) Get(
-	ctx context.Context, getDTO dto.UserGet,
+	ctx context.Context, req dto.UserGetReq,
 ) (*model.User, error) {
 	const op = "service.user.Get"
 	ctx = logger.WithLogOp(ctx, op)
 
 	p.log.DebugContext(ctx, "get user from db")
 
-	user, err := p.usrProvider.UserById(ctx, getDTO.Id)
+	user, err := p.usrProvider.UserById(ctx, req.Id)
 	if err != nil {
 		return nil, serr.Catch(err, op)
 	}
@@ -47,19 +47,19 @@ func (p *Provider) Get(
 }
 
 func (p *Provider) Create(
-	ctx context.Context, createDTO dto.UserCreate,
+	ctx context.Context, req dto.UserCreateReq,
 ) (string, error) {
 	const op = "service.user.Create"
 	ctx = logger.WithLogOp(ctx, op)
 
 	p.log.DebugContext(ctx, "creating user")
 
-	pass, err := bc.GeneratePassword(createDTO.Password)
+	pass, err := bc.GeneratePassword(req.Password)
 	if err != nil {
 		return "", serr.Catch(err, op)
 	}
 
-	u := model.NewUser(createDTO.Email, pass, createDTO.IsActive)
+	u := model.NewUser(req.Email, pass, req.IsActive)
 
 	ctx = logger.WithLogUserID(ctx, u.Id)
 
@@ -72,14 +72,14 @@ func (p *Provider) Create(
 }
 
 func (p *Provider) Delete(
-	ctx context.Context, deleteDTO dto.UserDelete,
+	ctx context.Context, req dto.UserDeleteReq,
 ) error {
 	const op = "service.user.Delete"
 	ctx = logger.WithLogOp(ctx, op)
 
 	p.log.DebugContext(ctx, "delete user from db")
 
-	err := p.usrProvider.DeleteUser(ctx, deleteDTO.Id)
+	err := p.usrProvider.DeleteUser(ctx, req.Id)
 	if err != nil {
 		return serr.Catch(err, op)
 	}
@@ -88,19 +88,19 @@ func (p *Provider) Delete(
 }
 
 func (p *Provider) Update(
-	ctx context.Context, updateDTO dto.UserUpdate,
+	ctx context.Context, req dto.UserUpdateReq,
 ) error {
 	const op = "service.user.Update"
 	ctx = logger.WithLogOp(ctx, op)
 
 	p.log.DebugContext(ctx, "update user in db")
 
-	pass, err := bc.GeneratePassword(updateDTO.Password)
+	pass, err := bc.GeneratePassword(req.Password)
 	if err != nil {
 		return serr.Catch(err, op)
 	}
 
-	u := model.NewUser(updateDTO.Email, pass, updateDTO.IsActive)
+	u := model.NewUser(req.Email, pass, req.IsActive)
 
 	ctx = logger.WithLogUserID(ctx, u.Id)
 

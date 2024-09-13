@@ -2,14 +2,21 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/AlonMell/ProviderHub/internal/infra/config"
 	"github.com/jmoiron/sqlx"
 	"log/slog"
 )
 
+type Config struct {
+	Host     string `yaml:"host" env-required:"true"`
+	Port     int    `yaml:"port" env-default:"5432"`
+	User     string `yaml:"user" env-default:"postgres"`
+	Password string `yaml:"password" env-default:"postgres"`
+	Database string `yaml:"database" env-default:"postgres"`
+}
+
 // TODO: Добавить Пул потоков
 
-func New(cfg *config.Config, logger *slog.Logger) (*sqlx.DB, error) {
+func New(cfg Config, logger *slog.Logger) (*sqlx.DB, error) {
 	const op = "storage.postgres.New"
 
 	sourceInfo := fmt.Sprintf(

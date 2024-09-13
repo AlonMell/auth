@@ -8,6 +8,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type Config struct {
+	AccessTTL  time.Duration `yaml:"access_ttl" env-default:"15m"`
+	RefreshTTL time.Duration `yaml:"refresh_ttl" env-default:"168h"`
+	Secret     string        `yaml:"secret" env-required:"true"`
+}
+
 type Claims struct {
 	Email string `json:"email"`
 	jwt.RegisteredClaims

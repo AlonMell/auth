@@ -1,4 +1,4 @@
-package post
+package user
 
 import (
 	"context"
@@ -15,31 +15,34 @@ import (
 	"github.com/AlonMell/ProviderHub/pkg/validator"
 )
 
-type Creater interface {
-	Create(context.Context, dto.UserCreate) (id string, err error)
+type Updater interface {
+	Update(context.Context, dto.UserUpdateReq) error
 }
 
-// New
-// @Summary Post User
+type UpdateResp struct {
+	resp.Response
+}
+
+// Update
+// @Summary Update User
 // @Tags user
 // @Security ApiKeyAuth
-// @Description Create user at system
+// @Description Update all info of a user at system
 // @Accept json
 // @Produce json
-// @Param input body Request true "user info"
+// @Param input body Request true "all user info"
 // @Success 200 {object} Response
-// @Router /api/v1/user [post]
-func New(
-	log *slog.Logger, c Creater,
+// @Router /api/v1/user [put]
+func Update(
+	log *slog.Logger, u Updater,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handler.user.post.New"
-		ctx := logger.WithLogOp(r.Context(), op)
+		ctx := logger.WithLogOp(r.Context(), "handler.user.Update")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(op, log, w, r)
+		errCatcher := errors.NewCatcher(ctx, log, w, r)
 
-		var req Request
+		var req dto.UserUpdateReq
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {
 			errCatcher.Catch(err)
 			return
@@ -52,19 +55,12 @@ func New(
 			return
 		}
 
-		createDTO := dto.UserCreate{
-			Email:    req.Email,
-			Password: req.Password,
-			IsActive: req.IsActive,
-		}
-
-		id, err := c.Create(ctx, createDTO)
-		if err != nil {
+		if err := u.Update(ctx, req); err != nil {
 			errCatcher.Catch(err)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		resp.WriteJSON(w, r, Response{Id: id})
+		resp.WriteJSON(w, r, UpdateResp{resp.Ok()})
 	}
 }

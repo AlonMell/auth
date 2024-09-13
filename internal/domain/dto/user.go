@@ -1,21 +1,21 @@
 package dto
 
-type UserGet struct {
-	Id string
+type UserGetReq struct {
+	Id string `json:"id" validate:"required,uuid"`
 }
 
-type UserCreate struct {
-	Email    string
-	Password string
-	IsActive bool
+type UserCreateReq struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,password"`
+	IsActive bool   `json:"is_active"`
 }
 
-type UserUpdate struct {
-	Email    string
-	Password string
-	IsActive bool
+type UserUpdateReq struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,password"`
+	IsActive bool   `json:"is_active"`
 }
 
-type UserDelete struct {
-	Id string
+type UserDeleteReq struct {
+	Id string `json:"id" validate:"required,uuid"`
 }

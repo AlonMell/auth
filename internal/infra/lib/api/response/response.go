@@ -2,9 +2,14 @@ package response
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 )
+
+type CtxKeyType int
+
+var StatusCtxKey = CtxKeyType(0)
 
 type Response struct {
 	Status string `json:"status"`
@@ -15,6 +20,10 @@ const (
 	StatusOK    = "Ok"
 	StatusError = "Error"
 )
+
+func Status(r *http.Request, status int) {
+	*r = *r.WithContext(context.WithValue(r.Context(), StatusCtxKey, status))
+}
 
 func Ok() Response {
 	return Response{
@@ -29,7 +38,7 @@ func Error(msg string) Response {
 	}
 }
 
-func WriteJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
+func WriteJSON(w http.ResponseWriter, r *http.Request, v any) {
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
 	if err := enc.Encode(v); err != nil {
@@ -38,9 +47,9 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	/*if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
-	}*/
+	}
 
-	w.Write(buf.Bytes())
+	_, _ = w.Write(buf.Bytes())
 }
