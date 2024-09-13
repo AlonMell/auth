@@ -25,10 +25,7 @@ var (
 )
 
 func GenerateToken(
-	id string,
-	email string,
-	duration time.Duration,
-	secret string,
+	id string, email string, duration time.Duration, secret string,
 ) (string, error) {
 	claims := Claims{
 		Email: email,

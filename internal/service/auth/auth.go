@@ -9,7 +9,7 @@ import (
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	ser "github.com/AlonMell/ProviderHub/internal/service"
-	catcher "github.com/AlonMell/ProviderHub/internal/service/errors"
+	catcher "github.com/AlonMell/ProviderHub/internal/service/catcher"
 	"log/slog"
 )
 

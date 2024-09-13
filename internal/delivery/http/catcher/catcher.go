@@ -1,4 +1,4 @@
-package errors
+package catcher
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
+	serr "github.com/AlonMell/ProviderHub/internal/service/catcher"
 	"log/slog"
 	"net/http"
 
@@ -41,13 +41,15 @@ func (c *Catcher) Catch(err error) {
 
 		switch errKind.Kind {
 		case serr.UserKind:
+			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "user kind error", sl.Err(err))
 			resp.WriteJSON(c.w, c.r, err.Error())
 			return
 		case serr.InternalKind:
-			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "internal error", sl.Err(err))
+			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "internal kind error", sl.Err(err))
 			resp.WriteJSON(c.w, c.r, "internal error")
 			return
 		case serr.SystemKind:
+			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "system kind error", sl.Err(err))
 			panic(err)
 		}
 	}

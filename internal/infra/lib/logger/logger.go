@@ -6,6 +6,12 @@ import (
 	"log/slog"
 )
 
+const (
+	userKey = "userId"
+	opKey   = "op"
+	reqKey  = "requestId"
+)
+
 type ctxKeyLog int
 
 const LogKey = ctxKeyLog(0)
@@ -24,12 +30,10 @@ func (l *DevelopHandler) Enabled(ctx context.Context, lev slog.Level) bool {
 	return l.handler.Enabled(ctx, lev)
 }
 
-//slog string?
-
 func (l *DevelopHandler) Handle(ctx context.Context, rec slog.Record) error {
 	if c, ok := getLogCtx(ctx); ok {
 		for key, value := range c {
-			rec.Add(key, value)
+			rec.Add(slog.String(key, value))
 		}
 	}
 	return l.handler.Handle(ctx, rec)
@@ -59,7 +63,7 @@ func getLogCtx(ctx context.Context) (logCtx, bool) {
 }
 
 func WithLogUserID(ctx context.Context, userID string) context.Context {
-	return updateLogCtx(ctx, logCtx{"userID": userID})
+	return updateLogCtx(ctx, logCtx{userKey: userID})
 }
 
 func WithLogOp(ctx context.Context, op string) context.Context {
@@ -67,11 +71,11 @@ func WithLogOp(ctx context.Context, op string) context.Context {
 		existingCtx["op"] += ": " + op
 		return context.WithValue(ctx, LogKey, existingCtx)
 	}
-	return context.WithValue(ctx, LogKey, logCtx{"op": op})
+	return context.WithValue(ctx, LogKey, logCtx{opKey: op})
 }
 
 func WithLogRequestID(ctx context.Context, requestID string) context.Context {
-	return updateLogCtx(ctx, logCtx{"requestID": requestID})
+	return updateLogCtx(ctx, logCtx{reqKey: requestID})
 }
 
 type errorWithLogCtx struct {

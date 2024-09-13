@@ -2,6 +2,8 @@ package router
 
 import (
 	mw "github.com/AlonMell/ProviderHub/internal/app/router/middleware"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/auth"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/user"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,9 +13,6 @@ import (
 
 	_ "github.com/AlonMell/ProviderHub/api"
 	httpSwagger "github.com/swaggo/http-swagger"
-
-	"github.com/AlonMell/ProviderHub/internal/handler/auth"
-	"github.com/AlonMell/ProviderHub/internal/handler/user"
 )
 
 type Router interface {

@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/catcher"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
@@ -37,10 +37,10 @@ func Login(
 	log *slog.Logger, refreshTTL time.Duration, usrProvider UserProvider,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := logger.WithLogOp(r.Context(), "handler.auth.Login")
+		ctx := logger.WithLogOp(r.Context(), "http.auth.Login")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(ctx, log, w, r)
+		errCatcher := catcher.NewCatcher(ctx, log, w, r)
 
 		var req dto.LoginReq
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {

@@ -2,8 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/catcher"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"github.com/go-chi/chi/v5/middleware"
@@ -32,10 +32,10 @@ func Refresh(
 	log *slog.Logger, refresher UserRefresher,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := logger.WithLogOp(r.Context(), "handler.auth.Refresh")
+		ctx := logger.WithLogOp(r.Context(), "http.auth.Refresh")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(ctx, log, w, r)
+		errCatcher := catcher.NewCatcher(ctx, log, w, r)
 
 		cookie, err := r.Cookie("refresh")
 		if err != nil {

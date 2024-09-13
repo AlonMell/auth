@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/catcher"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
@@ -37,10 +37,10 @@ func Post(
 	log *slog.Logger, c Creater,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := logger.WithLogOp(r.Context(), "handler.user.Post")
+		ctx := logger.WithLogOp(r.Context(), "http.user.Post")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(ctx, log, w, r)
+		errCatcher := catcher.NewCatcher(ctx, log, w, r)
 
 		var req dto.UserCreateReq
 		if err := decoder.DecodeJSON(r.Body, &req); err != nil {

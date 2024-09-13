@@ -8,7 +8,7 @@ import (
 	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	ser "github.com/AlonMell/ProviderHub/internal/service"
-	catcher "github.com/AlonMell/ProviderHub/internal/service/errors"
+	catcher "github.com/AlonMell/ProviderHub/internal/service/catcher"
 	"log/slog"
 
 	"github.com/AlonMell/ProviderHub/internal/domain/model"

@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
+	"github.com/AlonMell/ProviderHub/internal/delivery/http/catcher"
 	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
 	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
 	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
@@ -39,10 +39,10 @@ func Get(
 	log *slog.Logger, g Getter,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := logger.WithLogOp(r.Context(), "handler.user.Get")
+		ctx := logger.WithLogOp(r.Context(), "http.user.Get")
 		ctx = logger.WithLogRequestID(ctx, middleware.GetReqID(ctx))
 
-		errCatcher := errors.NewCatcher(ctx, log, w, r)
+		errCatcher := catcher.NewCatcher(ctx, log, w, r)
 
 		var req dto.UserGetReq
 		req.Id = r.URL.Query().Get("id")
