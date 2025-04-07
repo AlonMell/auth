@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -7,6 +7,6 @@ services:
     environment:
       POSTGRES_USER: "alonmell"
       POSTGRES_PASSWORD: "qwerty"
-      POSTGRES_DB: "ProviderHub"
+      POSTGRES_DB: "auth"
     ports:
       - "5432:5432"

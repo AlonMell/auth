@@ -1,6 +1,6 @@
 package config
 
-import "github.com/AlonMell/ProviderHub/internal/app/postgres"
+import "github.com/AlonMell/auth/internal/app/postgres"
 
 type Config struct {
 	Postgres  postgres.Config `yaml:"postgres" env-required:"true"`

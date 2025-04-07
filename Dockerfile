@@ -13,11 +13,11 @@ RUN make build
 FROM alpine
 RUN apk add --no-cache ca-certificates
 
-WORKDIR /providerHub
+WORKDIR /auth
 
 ENV CONFIG_PATH=./config/config.yaml
 
-COPY --from=builder /app/bin/providerHub .
+COPY --from=builder /app/bin/auth .
 COPY --from=builder /app/config ./config
 
-CMD ["./providerHub"]
+CMD ["./auth"]

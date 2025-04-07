@@ -1,17 +1,18 @@
 package app
 
 import (
-	httpApp "github.com/AlonMell/ProviderHub/internal/app/http"
-	"github.com/AlonMell/ProviderHub/internal/app/postgres"
-	"github.com/AlonMell/ProviderHub/internal/app/router"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
-	"github.com/AlonMell/ProviderHub/internal/infra/repo"
-	"github.com/AlonMell/ProviderHub/internal/service/auth"
-	"github.com/AlonMell/ProviderHub/internal/service/user"
-	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
-	sq "github.com/Masterminds/squirrel"
 	"log/slog"
 	"os"
+
+	httpApp "github.com/AlonMell/auth/internal/app/http"
+	"github.com/AlonMell/auth/internal/app/postgres"
+	"github.com/AlonMell/auth/internal/app/router"
+	"github.com/AlonMell/auth/internal/infra/lib/jwt"
+	"github.com/AlonMell/auth/internal/infra/repo"
+	"github.com/AlonMell/auth/internal/service/auth"
+	"github.com/AlonMell/auth/internal/service/user"
+	"github.com/AlonMell/grovelog/util"
+	sq "github.com/Masterminds/squirrel"
 )
 
 var (
@@ -30,7 +31,7 @@ func New(
 ) *App {
 	db, err := postgres.New(postgresCfg, log)
 	if err != nil {
-		log.Error("error with start db postgres!", sl.Err(err))
+		log.Error("error with start db postgres!", util.Err(err))
 		os.Exit(1)
 	}
 

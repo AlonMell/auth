@@ -1,13 +1,12 @@
 package config
 
 import (
-	"flag"
-	"github.com/ilyakaznacheev/cleanenv"
 	"os"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
-func MustLoad(config any) {
-	path := fetchConfigPath()
+func MustLoad(config any, path string) {
 	if path == "" {
 		panic("config file path is empty")
 	}
@@ -19,17 +18,4 @@ func MustLoad(config any) {
 	if err := cleanenv.ReadConfig(path, config); err != nil {
 		panic("load config fail: " + err.Error())
 	}
-}
-
-func fetchConfigPath() string {
-	var path string
-
-	flag.StringVar(&path, "config", "", "path to config file")
-	flag.Parse()
-
-	if path == "" {
-		path = os.Getenv("CONFIG_PATH")
-	}
-
-	return path
 }

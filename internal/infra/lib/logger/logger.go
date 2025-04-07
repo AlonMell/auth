@@ -2,100 +2,44 @@ package logger
 
 import (
 	"context"
-	"errors"
 	"log/slog"
+	"os"
+
+	"github.com/AlonMell/grovelog"
+	"github.com/AlonMell/grovelog/util"
 )
 
-type ctxKeyLog int
+const (
+	envDev  = "dev"
+	envProd = "prod"
+)
 
-const LogKey = ctxKeyLog(0)
+func SetupLogger(env string) *slog.Logger {
+	var log *slog.Logger
 
-type logCtx map[string]string
-
-type DevelopHandler struct {
-	handler slog.Handler
-}
-
-func NewDevelopHandler(h slog.Handler) *DevelopHandler {
-	return &DevelopHandler{handler: h}
-}
-
-func (l *DevelopHandler) Enabled(ctx context.Context, lev slog.Level) bool {
-	return l.handler.Enabled(ctx, lev)
-}
-
-//slog string?
-
-func (l *DevelopHandler) Handle(ctx context.Context, rec slog.Record) error {
-	if c, ok := getLogCtx(ctx); ok {
-		for key, value := range c {
-			rec.Add(key, value)
-		}
+	switch env {
+	case envDev:
+		log = setupLogger(slog.LevelDebug, grovelog.Color)
+	case envProd:
+		log = setupLogger(slog.LevelWarn, grovelog.JSON)
 	}
-	return l.handler.Handle(ctx, rec)
+
+	return log
 }
 
-func (l *DevelopHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &DevelopHandler{handler: l.handler.WithAttrs(attrs)}
-}
-
-func (l *DevelopHandler) WithGroup(name string) slog.Handler {
-	return &DevelopHandler{handler: l.handler.WithGroup(name)}
-}
-
-func updateLogCtx(ctx context.Context, newCtx logCtx) context.Context {
-	if existingCtx, ok := getLogCtx(ctx); ok {
-		for k, v := range newCtx {
-			existingCtx[k] = v
-		}
-		return context.WithValue(ctx, LogKey, existingCtx)
-	}
-	return context.WithValue(ctx, LogKey, newCtx)
-}
-
-func getLogCtx(ctx context.Context) (logCtx, bool) {
-	c, ok := ctx.Value(LogKey).(logCtx)
-	return c, ok
-}
-
-func WithLogUserID(ctx context.Context, userID string) context.Context {
-	return updateLogCtx(ctx, logCtx{"userID": userID})
+func setupLogger(level slog.Level, format grovelog.Format) *slog.Logger {
+	opts := grovelog.NewOptions(level, "", format)
+	return grovelog.NewLogger(os.Stdout, opts)
 }
 
 func WithLogOp(ctx context.Context, op string) context.Context {
-	if existingCtx, ok := getLogCtx(ctx); ok {
-		existingCtx["op"] += ": " + op
-		return context.WithValue(ctx, LogKey, existingCtx)
-	}
-	return context.WithValue(ctx, LogKey, logCtx{"op": op})
+	return util.UpdateLogCtx(ctx, "op", op)
+}
+
+func WithLogUserID(ctx context.Context, userID string) context.Context {
+	return util.UpdateLogCtx(ctx, "userID", userID)
 }
 
 func WithLogRequestID(ctx context.Context, requestID string) context.Context {
-	return updateLogCtx(ctx, logCtx{"requestID": requestID})
-}
-
-type errorWithLogCtx struct {
-	err error
-	ctx logCtx
-}
-
-func (e *errorWithLogCtx) Error() string {
-	return e.err.Error()
-}
-
-func (e *errorWithLogCtx) Unwrap() error {
-	return e.err
-}
-
-func Wrap(ctx context.Context, err error) error {
-	c, _ := getLogCtx(ctx)
-	return &errorWithLogCtx{err: err, ctx: c}
-}
-
-func ErrorCtx(ctx context.Context, err error) context.Context {
-	var errCtx *errorWithLogCtx
-	if errors.As(err, &errCtx) {
-		return updateLogCtx(ctx, errCtx.ctx)
-	}
-	return ctx
+	return util.UpdateLogCtx(ctx, "requestID", requestID)
 }

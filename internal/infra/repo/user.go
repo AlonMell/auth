@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlonMell/ProviderHub/internal/domain/entity"
-	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
+
+	"github.com/AlonMell/auth/internal/domain/entity"
+	vo "github.com/AlonMell/auth/internal/domain/valueObject"
+	"github.com/AlonMell/auth/internal/infra/lib/logger"
+	"github.com/AlonMell/grovelog/util"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
-	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	"github.com/AlonMell/auth/internal/domain/model"
 )
 
 var (
@@ -68,7 +70,7 @@ func (r *UserRepo) SaveUser(
 	txFn := func() {
 		if err != nil {
 			if errRb := tx.Rollback(); errRb != nil {
-				err = logger.Wrap(ctx, fmt.Errorf("error during rollback: %w", err))
+				err = util.WrapCtx(ctx, fmt.Errorf("error during rollback: %w", err))
 			}
 			return
 		}
@@ -109,7 +111,7 @@ func (r *UserRepo) saveUser(
 	}
 	if affected == 0 {
 		fmt.Println("Обосрался здесь))")
-		return "", logger.Wrap(ctx, ErrUserExists)
+		return "", util.WrapCtx(ctx, ErrUserExists)
 	}
 
 	return user.Id, nil

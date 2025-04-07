@@ -2,16 +2,17 @@ package user
 
 import (
 	"context"
-	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/domain/entity"
-	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
-	bc "github.com/AlonMell/ProviderHub/internal/infra/lib/bcrypt"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	ser "github.com/AlonMell/ProviderHub/internal/service"
-	catcher "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"log/slog"
 
-	"github.com/AlonMell/ProviderHub/internal/domain/model"
+	"github.com/AlonMell/auth/internal/domain/dto"
+	"github.com/AlonMell/auth/internal/domain/entity"
+	vo "github.com/AlonMell/auth/internal/domain/valueObject"
+	bc "github.com/AlonMell/auth/internal/infra/lib/bcrypt"
+	"github.com/AlonMell/auth/internal/infra/lib/logger"
+	ser "github.com/AlonMell/auth/internal/service"
+	catcher "github.com/AlonMell/auth/internal/service/errors"
+
+	"github.com/AlonMell/auth/internal/domain/model"
 )
 
 type Repo interface {

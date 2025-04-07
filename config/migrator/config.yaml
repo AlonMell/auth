@@ -3,7 +3,7 @@ postgres:
   port: 5432
   user: "alonmell"
   password: "qwerty"
-  database: "ProviderHub"
+  database: "auth"
 migration:
   table: "migrations_history"
   major: 0

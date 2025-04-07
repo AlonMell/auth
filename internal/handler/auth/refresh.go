@@ -2,13 +2,14 @@ package auth
 
 import (
 	"context"
-	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
-	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"net/http"
+
+	"github.com/AlonMell/auth/internal/domain/dto"
+	"github.com/AlonMell/auth/internal/handler/errors"
+	resp "github.com/AlonMell/auth/internal/infra/lib/api/response"
+	"github.com/AlonMell/auth/internal/infra/lib/logger"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type UserRefresher interface {
@@ -19,15 +20,6 @@ type RefreshResp struct {
 	AccessToken string `json:"access_token"`
 }
 
-// Refresh
-// @Summary Refresh
-// @Tags auth
-// @Description Refresh access token
-// @Accept json
-// @Produce json
-// @Param input body Request true "refresh token"
-// @Success 200 {object} Response
-// @Router /refresh [post]
 func Refresh(
 	log *slog.Logger, refresher UserRefresher,
 ) func(w http.ResponseWriter, r *http.Request) {

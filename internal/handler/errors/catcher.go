@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	serr "github.com/AlonMell/ProviderHub/internal/service/errors"
 	"log/slog"
 	"net/http"
 
-	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
+	resp "github.com/AlonMell/auth/internal/infra/lib/api/response"
+	serr "github.com/AlonMell/auth/internal/service/errors"
+	"github.com/AlonMell/grovelog/util"
 )
 
 const (
@@ -44,7 +43,7 @@ func (c *Catcher) Catch(err error) {
 			resp.WriteJSON(c.w, c.r, err.Error())
 			return
 		case serr.InternalKind:
-			c.log.ErrorContext(logger.ErrorCtx(c.ctx, err), "internal error", sl.Err(err))
+			c.log.ErrorContext(util.ErrorCtx(c.ctx, err), "internal error", util.Err(err))
 			resp.WriteJSON(c.w, c.r, "internal error")
 			return
 		case serr.SystemKind:

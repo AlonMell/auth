@@ -4,7 +4,7 @@ postgres:
   port: 5432
   user: "alonmell"
   password: "qwerty"
-  database: "ProviderHub"
+  database: "auth"
 http_server:
   address: "localhost:8080"
   timeout: 5s

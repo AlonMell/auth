@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlonMell/ProviderHub/internal/app/router"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/AlonMell/ProviderHub/pkg/logger/sl"
+	"github.com/AlonMell/auth/internal/app/router"
+	"github.com/AlonMell/grovelog/util"
 )
 
 type Config struct {
@@ -60,6 +60,6 @@ func (s *Server) Stop() {
 
 	s.Logger.Info("shutting down server...")
 	if err := s.Shutdown(ctx); err != nil {
-		s.Logger.Error("server forced to shutdown", sl.Err(err))
+		s.Logger.Error("server forced to shutdown", util.Err(err))
 	}
 }

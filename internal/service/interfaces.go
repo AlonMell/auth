@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/AlonMell/ProviderHub/internal/domain/entity"
-	"github.com/AlonMell/ProviderHub/internal/domain/model"
-	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
+
+	"github.com/AlonMell/auth/internal/domain/entity"
+	"github.com/AlonMell/auth/internal/domain/model"
+	vo "github.com/AlonMell/auth/internal/domain/valueObject"
 )
 
 type UserSaver interface {

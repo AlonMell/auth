@@ -3,11 +3,11 @@ package errors
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
-	"github.com/AlonMell/ProviderHub/internal/infra/repo"
 	"net/http"
+
+	"github.com/AlonMell/auth/internal/infra/lib/jwt"
+	"github.com/AlonMell/auth/internal/infra/repo"
+	"github.com/AlonMell/grovelog/util"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -52,7 +52,7 @@ func Wrap(err error, kind int, code int) *ServiceError {
 }
 
 func WrapCtx(ctx context.Context, err error) error {
-	return logger.Wrap(ctx, err)
+	return util.WrapCtx(ctx, err)
 }
 
 func Catch(ctx context.Context, err error) error {
@@ -60,7 +60,6 @@ func Catch(ctx context.Context, err error) error {
 	case errors.Is(err, repo.ErrUserNotFound):
 		return WrapCtx(ctx, Wrap(err, UserKind, NotFound))
 	case errors.Is(err, repo.ErrUserExists):
-		fmt.Println("Зашел сюда." + err.Error())
 		return WrapCtx(ctx, Wrap(err, UserKind, BadRequest))
 	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 		return WrapCtx(ctx, Wrap(ErrInvalidPassword, UserKind, BadRequest))

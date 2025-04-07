@@ -2,17 +2,18 @@ package user
 
 import (
 	"context"
-	"github.com/AlonMell/ProviderHub/internal/domain/dto"
-	"github.com/AlonMell/ProviderHub/internal/handler/errors"
-	resp "github.com/AlonMell/ProviderHub/internal/infra/lib/api/response"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/decoder"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"net/http"
 
+	"github.com/AlonMell/auth/internal/domain/dto"
+	"github.com/AlonMell/auth/internal/handler/errors"
+	resp "github.com/AlonMell/auth/internal/infra/lib/api/response"
+	"github.com/AlonMell/auth/internal/infra/lib/decoder"
+	"github.com/AlonMell/auth/internal/infra/lib/logger"
+
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/AlonMell/ProviderHub/pkg/validator"
+	"github.com/AlonMell/auth/pkg/validator"
 )
 
 type Updater interface {

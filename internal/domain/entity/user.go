@@ -1,7 +1,7 @@
 package entity
 
 import (
-	vo "github.com/AlonMell/ProviderHub/internal/domain/valueObject"
+	vo "github.com/AlonMell/auth/internal/domain/valueObject"
 	"github.com/google/uuid"
 )
 

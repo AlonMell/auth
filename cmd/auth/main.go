@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/AlonMell/ProviderHub/cmd/providerHub/config"
-	loader "github.com/AlonMell/ProviderHub/internal/infra/lib/config"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/logger"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/AlonMell/ProviderHub/internal/app"
+	"github.com/AlonMell/auth/cmd/auth/config"
+	loader "github.com/AlonMell/auth/internal/infra/lib/config"
+	"github.com/AlonMell/auth/internal/infra/lib/logger"
+
+	"github.com/AlonMell/auth/internal/app"
 )
 
 // TODO: Написать свой генератор случайных чисел (math/rand)
@@ -18,9 +19,9 @@ import (
 // TODO: Сервисы по работе с правами и пользователями
 // TODO: Возможно сервис по работе с компонентами приложения по api keys?
 
-// @title ProviderHub API
+// @title auth API
 // @version 1.0
-// @description This is a sample server ProviderHub server.
+// @description This is a sample server auth server.
 
 // @host localhost:8080
 // @BasePath /
@@ -30,8 +31,10 @@ import (
 // @name Authorization
 
 func main() {
+	paths := config.MustLoadFlags()
+
 	var cfg config.Config
-	loader.MustLoad(&cfg)
+	loader.MustLoad(&cfg, paths.Config)
 
 	log := logger.SetupLogger(cfg.Env)
 

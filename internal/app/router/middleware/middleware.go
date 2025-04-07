@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/AlonMell/auth/internal/infra/lib/jwt"
 
 	"github.com/go-chi/chi/v5/middleware"
 )

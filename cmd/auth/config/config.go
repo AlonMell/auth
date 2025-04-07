@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/AlonMell/ProviderHub/internal/app/http"
-	"github.com/AlonMell/ProviderHub/internal/app/postgres"
-	"github.com/AlonMell/ProviderHub/internal/infra/lib/jwt"
+	"github.com/AlonMell/auth/internal/app/http"
+	"github.com/AlonMell/auth/internal/app/postgres"
+	"github.com/AlonMell/auth/internal/infra/lib/jwt"
 )
 
 type Config struct {
